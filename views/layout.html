@@ -4,15 +4,31 @@
 	<title>{% block title %}Javascript Interface for Remote Controlling WISEBED Nodes{% endblock %}</title>
 
 	{% block head %}
-
-	<style rel="stylesheet" href="/css/bootstrap.css"></style>
-
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="/css/bootstrap.css">
+	<link rel="stylesheet" href="/css/main.css">
 	{% endblock %}
 
 </head>
 <body>
 	<div id="wrapper">
-		{% block content %} {% endblock %}
+		<div id="header">
+			<div class="container">
+	            <div class="row">
+	                <div class="span12">
+	                    <div class="page-header">
+	                        <h1>JSmote for WISEBED Nodes</h1>
+	                    </div>
+	                </div>
+	            </div>
+	        </div>
+		</div>
+		<div id="content">
+			{% block content %} {% endblock %}
+		</div>
+		<div id="footer">
+		 <hr />
+        <p>Bachelor thesis Javascript Interface for Remote Controlling WISEBED Nodes Fabian Bormann (Apache Open Source Licence) - <a href="https://github.com/fabianbormann/WiseMote.js">WiseMote.js on GitHub</a></p>
 	</div>
 </body>
 </html>

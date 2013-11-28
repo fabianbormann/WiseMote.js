@@ -1,3 +1,3 @@
-exports.login = function(req, res){
+exports.guests = function(req, res){
 	res.render('login');
 };

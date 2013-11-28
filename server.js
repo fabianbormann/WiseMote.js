@@ -1,7 +1,8 @@
 var express = require('express'),
 	swig = require('swig'),
 
-	welcome = require('./routes/welcome.js');
+	welcome = require('./routes/welcome.js'),
+	login = require('./routes/login.js');
 
 var app = express();
 
@@ -17,7 +18,9 @@ app.configure(function () {
 app.set('view cache', false);
 swig.setDefaults({cache: false});
 
-app.get('/', welcome.login);
+app.get('/', welcome.guests);
+app.post('/login', login.verify);
+
 
 app.listen(3000);
 console.log('Listening on port 3000');
