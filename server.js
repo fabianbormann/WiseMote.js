@@ -1,7 +1,7 @@
 var express = require('express'),
 	swig = require('swig'),
 
-	welcome = require('./routes/welcome.js'),
+	index = require('./routes/index.js'),
 	login = require('./routes/login.js');
 
 var app = express();
@@ -18,7 +18,7 @@ app.configure(function () {
 app.set('view cache', false);
 swig.setDefaults({cache: false});
 
-app.get('/', welcome.guests);
+app.get('/', index.guests);
 app.post('/login', login.verify);
 
 

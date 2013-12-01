@@ -1,0 +1,44 @@
+{% extends 'layout.html' %}
+{% block head %}
+
+{% parent %}
+
+{% endblock %}
+{% block content %}
+<div class="container">
+	<div class="row">
+		<div class="span6">
+			<form method="post" action="/login" id="loginForm">
+				<label>Username</label>
+				<input name="username" class="span3" type="text" placeholder="Please enter your username." required>
+				<select class="span3">
+					<option>@wisebed1.itm.uni-luebeck.de</option>
+				</select>
+				<label>Password</label>
+				<input type="password" name="password" required>
+
+				<label>URN Prefix</label>
+				<span class="uneditable-input">urn:wisebed:uzl1:</span>
+
+				<hr/><p>No account yet? <a href="http://wisebed.eu/site/index.php/register/">Register here!</a></p>
+				<input type="submit" class="btn btn-default" value="Login" >
+			</form>
+		</div>
+		<div class="span6">
+			<div class="hero-unit">
+				<h2>Introduction</h2>
+				<p>	 
+					The Wisebed Testbed enables the easy deployment of 
+					large scale wireless sensor network experiments without the need to buy the 
+					expensive sensor node hardware. However, programmers still have to learn an embedded 
+					programming language and put up with the tedious debugging characteristics of a large 
+					embedded network. To lower these prerequisites for starting with the development of 
+					sensor network applications (e.g., for students), this projects aims at creating a 
+					remote control interface for wisebed nodes, 
+					which allows the easy programming and debugging of these applications inside a Webbrowser.
+				</p>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
