@@ -2,6 +2,7 @@ var express = require('express'),
 	swig = require('swig'),
 
 	index = require('./routes/index.js'),
+	home = require('./routes/home.js'),
 	login = require('./routes/login.js');
 
 var app = express();
@@ -20,6 +21,8 @@ swig.setDefaults({cache: false});
 
 app.get('/', index.guests);
 app.post('/login', login.verify);
+
+app.get('/home', home.welcome)
 
 
 app.listen(3000);

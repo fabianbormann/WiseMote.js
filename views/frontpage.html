@@ -1,0 +1,28 @@
+{% extends 'userScreenlayout.html' %}
+{% block head %}
+
+{% parent %}
+
+{% endblock %}
+{% block content %}
+<div class="jumbotron">
+    <h1>Hey </h1>
+    <p class="lead">Start a new wisebed experiment! Take a look at the examples, manage or share
+        your previous experiments. You can start a new experiment on the <h:link value="experiments page" outcome="experiments" /> or by clicking this button.</p>
+    <a class="btn btn-large btn-success" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
+</div>
+<br />
+<hr />
+<div class="row-fluid">
+    <div class="span6">
+        <h2>About <a href="http://wisebed.eu/site/">Wisebed</a></h2>
+        <p>The aim of this project is to provide a multi-level infrastracture of interconnected testbeds of largescale wireless sensor networks for research purposes, pursuing an interdisciplinary approach that integrates the aspects of hardware, software, algorithms, and data.</p>
+        <p><a class="btn" href="http://wisebed.eu/site/about-wisebed/project-description-and-goals/">View details</a></p>
+    </div>
+    <div class="span6">
+        <h2>What is the Wiselib?</h2>
+        <p>The Wiselib is an algorithms library for networked embedded devices. It contains various algorithm classes (for instance, localization or routing) that can be compiled for several platforms such as iSense or Contiki, or the sensor network simulator Shawn.</p>
+        <p><a class="btn" href="https://github.com/ibr-alg/wiselib/wiki">View details</a></p>
+    </div>
+</div>        
+{% endblock %}

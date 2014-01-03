@@ -1,0 +1,30 @@
+<html>
+<head>
+	<title>coAP test</title>
+
+	<script type="text/javascript">
+		var l = window.location;
+		var wisebedWebSocketBaseUrl = 'ws://' + l.host;
+		var wisebedBaseUrl = "http://wisebed.itm.uni-luebeck.de";
+	</script>
+
+	<script type="text/javaScript" src="jquery-1.7.1.min.js"></script> 
+	<script type="text/javaScript" src="wisebed.js"></script>
+	<script type="text/javaScript" src="base64_encode.js"></script> 
+	<script type="text/javaScript" src="base64_decode.js"></script>
+	<script type="text/javaScript" src="ticketsystem.js"></script>
+	<script type="text/javaScript" src="CoAP.js"></script>
+	<script type="text/javaScript" src="wisebed-remote.js"></script>
+	<script type="text/javaScript" src="jquery.md5.js"></script>
+	<script type="text/javascript">
+		function sendMessage(){
+			var message = document.getElementById("message").value;
+			jsmote.alert(message);
+		}
+	</script>
+</head>
+<body>
+	<input type="text" id="message"/>
+	<button onclick="sendMessage();">send</button>
+</body>
+</html>
