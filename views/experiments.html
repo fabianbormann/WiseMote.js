@@ -1,0 +1,47 @@
+{% extends 'userScreenLayout.html' %}
+{% block head %}
+
+{% parent %}
+
+{% endblock %}
+{% block content %}
+    <!-- begin content -->
+    <h1>Experiments</h1>
+    <br />
+    
+   <!-- <div>
+        Click on a experiment in the table to see more information like
+        your source code and the Node URNs.
+    </div> -->
+
+    <div class="alert alert-info">
+        You don't have any experiments yet.
+    </div>               
+    
+    <table class="table table-striped">
+        <tr>
+            <td>#</td>
+            <td>Name</td>
+            <td>Reserved Nodes</td>
+            <td>Time</td>
+        </tr>
+    </table>
+    <br />
+    <a class="btn btn-large btn-success" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
+    <div id="newExperimentForm" style="display: none">
+        <form id="reservationForm" action="/experiment/{{ username }}/new" method="POST">
+            <label for="urnPrefix">URN Prefix</label>
+            <span class="uneditable-input" id="urnPrefix">urn:wisebed:uzl1:</span>
+            <label for="nodeUrns">Node URN's (use "," as delimiter)</label>
+            <textarea class="form-control" id="nodeUrns" rows="3"></textarea>
+            <br />                  
+            <label for="duration">Duration</label>
+            <input type="text" id="duration" name="duration" class="form-control" placeholder="Enter duration in minutes">
+            <label for="offset">Offset</label>
+            <input type="text" id="offset" name="offset" class="form-control" placeholder="Enter the offset in minutes">        
+            <br /><br />
+            <button type="submit" class="btn btn-default">Start reservation</button>
+        <form>
+    </div>
+
+{% endblock %}

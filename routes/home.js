@@ -1,3 +1,9 @@
 exports.welcome = function(req, res){
-	res.render('frontpage');
+	if (!req.session.username) {
+		res.redirect('/');
+	} else {
+		res.render('frontpage', {
+			username : req.session.username
+		});
+	}
 };

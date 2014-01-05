@@ -5,60 +5,69 @@ var mongoose = require('mongoose'),
 mongoose.connect('mongodb://localhost/wisemote');
 var db = mongoose.connection;
 
+var wisebed = require('wisebed.js');
+
 var userSchema = mongoose.Schema({
-	id: Number,
-    username: String,
-    password: String
+    username: {
+        type:String,
+        required: true,
+        unique: true
+    }
 });
 
 var User = mongoose.model('User', userSchema);
 
 exports.verify = function(req, res) {
-	console.log("Try to verfy user "+req.body.username);
-    User.find({'username': req.body.username}, function(err, user) {
-        if(err) {
-        	throw err;
-        	res.redirect('/');
-        }
-        else {
-	        if (user) {
-	        	console.log("found: "+user);
-	        	if(user.password == req.body.password) {
-	            	req.session.username = req.body.username;
-	            	req.session.auth = crypto.createHash('md5').update(req.body.password).digest('hex');
-	            }
 
-	            res.redirect('/');
+	var config =  {
+		"rest_api_base_url"  : "http://portal.wisebed.itm.uni-luebeck.de/rest/v1.0",
+  		"websocket_base_url" : "ws://portal.wisebed.itm.uni-luebeck.de/ws/v1.0"
+  	};
 
-	        } 
-	        else {
-	        	console.log("username not found.. check wisebed data");
-	        	var loginData = { authenticationData : [] };
-	        	var testbedId = "uzl";
-	        	var wisebedBaseUrl = "http://wisebed.itm.uni-luebeck.de";
+	var testbed = new wisebed.Wisebed(config.rest_api_base_url, config.websocket_base_url);
+	
+	var credentials = { "authenticationData" : [
+	      {"urnPrefix" : "urn:wisebed:uzl1:",
+	      "username"  : "user1",
+	      "password"  : "user1"}   
+		]
+	};
 
-	        	loginData.authenticationData[0] = {
-					urnPrefix : 'urn:wisebed:uzl1:',
-					username  : req.body.username+'@wisebed1.itm.uni-luebeck.de',
-					password  : req.body.password
-				};
+	testbed.login(credentials,loggin,redirect);
 
-	        	request({
-					url: wisebedBaseUrl + "/rest/2.3/" + testbedId + "/login",
-		            method: "POST",
-		            multipart:
-				      [ { 'content-type': 'application/json'
-				        ,  body: JSON.stringify(loginData, null, '  ')
-				        }
-				      ]
-	        	}, function (error, response, body) {
-				  if (!error && response.statusCode == 200) {
-				    console.log(body);
-				  }
-				});
-
-	            res.redirect('/');
+	function loggin(status) {
+		User.find({'username': req.body.username}, function(err, user) {
+	        if(err) {
+	        	throw err;
+	        	
 	        }
-    	}
-    });
+	        else {
+		        if (user.length < 1) {
+		        	var user = new User({ username: req.body.username });
+					user.save(function (err) {
+					  if (err)
+					  	throw err;
+					});
+
+					req.session.username = req.body.username;
+		        	
+		        }
+		        else {
+		        	req.session.username = user.username;
+		        }
+
+		        res.redirect('/home');
+			}
+		});
+	}
+
+	function redirect() {
+		res.redirect('/');
+	}
 };
+
+exports.logout = function(req, res) { 
+	delete req.session.username;
+  	res.redirect('/');
+};
+

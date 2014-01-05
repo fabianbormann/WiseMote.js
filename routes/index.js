@@ -1,3 +1,7 @@
 exports.guests = function(req, res){
-	res.render('index');
+	if (!req.session.username) {
+		res.render('index');
+	} else {
+		res.redirect('/home');
+	}
 };

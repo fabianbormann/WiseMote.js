@@ -1,4 +1,4 @@
-{% extends 'userScreenlayout.html' %}
+{% extends 'userScreenLayout.html' %}
 {% block head %}
 
 {% parent %}
@@ -6,10 +6,25 @@
 {% endblock %}
 {% block content %}
 <div class="jumbotron">
-    <h1>Hey </h1>
+    <h1>Hey {{ username }}</h1>
     <p class="lead">Start a new wisebed experiment! Take a look at the examples, manage or share
-        your previous experiments. You can start a new experiment on the <h:link value="experiments page" outcome="experiments" /> or by clicking this button.</p>
+        your previous experiments. You can start a new experiment on the <a href="/experiments/{{ username }}">experiments page</a> or by clicking this button.</p>
     <a class="btn btn-large btn-success" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
+    <div id="newExperimentForm" style="display: none">
+        <form id="reservationForm" action="/experiment/{{ username }}/new" method="POST">
+            <label for="urnPrefix">URN Prefix</label>
+            <span class="uneditable-input" id="urnPrefix">urn:wisebed:uzl1:</span>
+            <label for="nodeUrns">Node URN's (use "," as delimiter)</label>
+            <textarea class="form-control" id="nodeUrns" rows="3"></textarea>
+            <br />                  
+            <label for="duration">Duration</label>
+            <input type="text" id="duration" name="duration" class="form-control" placeholder="Enter duration in minutes">
+            <label for="offset">Offset</label>
+            <input type="text" id="offset" name="offset" class="form-control" placeholder="Enter the offset in minutes">        
+            <br /><br />
+            <button type="submit" class="btn btn-default">Start reservation</button>
+        <form>
+    </div>
 </div>
 <br />
 <hr />
