@@ -1,38 +1,16 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="sixteen wide column">
-    <h1>Hey {{ username }}</h1>
-    <div class="ui divider"></div>
+<div class="sixteen wide middle aligned column">
+    <h2><i class="big circular home icon"></i> Hey {{ username }}</h2>
 </div>
+<div class="ui divider"></div>
 <div class="eight wide column">
-    <p>Start a new wisebed experiment! Take a look at the examples, manage or share
-        your previous experiments. You can start a new experiment on the <a href="/experiments/{{ username }}">experiments page</a> or by clicking this button.
+    <p>Start a new WiseMote project! Take a look at the examples, manage or share
+        your previous projects or start a new experiment. Visit your workspace for more information.
     </p>
-    <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
-    <div id="newExperimentForm" style="display: none">
-        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
-            <div class="field">
-                <label>Name</label>
-                <input type="text" name="experimentName" placeholder="Your experimentname">
-            </div>
-            <div class="field">
-                <label>Node URN's (use "," as delimiter)</label>
-                <textarea name="urns"></textarea>
-            </div>
-            <div class="field">
-                <label>Duration</label>
-                <input type="text" name="duration" placeholder="Enter duration in minutes">
-            </div>
-            <div class="field">
-                <label>Offset</label>
-                <input type="text" name="offset" placeholder="Enter the offset in minutes">
-            </div>   
-            <div class="ui divider"></div>
-            <button type="submit" class="ui small blue submit button">Start reservation</button>
-        </form>
-    </div>
 </div>
+
 
 <div class="sixteen wide column">
     <div class="ui divider"></div>

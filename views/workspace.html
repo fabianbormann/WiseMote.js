@@ -1,8 +1,8 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="sixteen wide column">
-    <h1>Experiments</h1>
+<div class="eight wide column">
+    <h1><i class="big code icon"></i>Projects</h1>
     <div class="ui divider"></div>
 
     <table class="ui table segment">
@@ -10,30 +10,33 @@
             <tr>
                 <th>#</th>
                 <th>Name</th>
-                <th>Reserved Nodes</th>
+                <th>Members</th>
                 <th>Time</th>
             </tr>
         </thead>
         <tbody>
-        {% if experiments %}
-            {% for experiment in experiments %}
+        {% if projects %}
+            {% for project in projects %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td>{{ experiment.name }}</td>
-                    <td>{{ experiment.nodes }}</td>
-                    <td>{{ experiment.time }}</td>
+                    <td>{{ project.name }}</td>
+                    <td>{{ project.nodes }}</td>
+                    <td>{{ project.time }}</td>
                 </tr>
             {% endfor %}
         {% else %}
         <tr class="warning">
-            <td colspan="4">You don't have any experiments yet.</td>
+            <td colspan="4">You don't have any projects yet.</td>
         </tr>
         {% endif %}
         </tbody>
         <tfoot>
         </tfoot>
     </table>
-
+</div>
+<div class="eight wide column">
+    <h1><i class="big lab icon"></i>Experiments</h1>
+    <div class="ui divider"></div>
     <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
     <div id="newExperimentForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
@@ -57,6 +60,4 @@
             <button type="submit" class="ui small blue submit button">Start reservation</button>
         </form>
     </div>
-</div>
-
 {% endblock %}

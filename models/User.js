@@ -6,7 +6,7 @@ var userSchema = mongoose.Schema({
         required: true,
         unique: true
     },
-    experiments: {
+    projects: {
     	type:String
     }
 });

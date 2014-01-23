@@ -1,21 +1,28 @@
 var mongoose = require('mongoose');
 
 var experimentSchema = mongoose.Schema({
-	id: {
-        type:Number,
-        required: true,
-        unique: true
-    },
-    name: {
+	project: {
         type:String,
         required: true
     },
-    code: {
-        type:String
+    duration: {
+        type:Number
+    },
+    offset: {
+        type:Number
     },
     date: {
         type:Date,
         required: true
+    },
+    nodeUrns: {
+        type:String
+    },
+    visitors: {
+        type:String
+    },
+    console: {
+        type:String
     }
 });
 

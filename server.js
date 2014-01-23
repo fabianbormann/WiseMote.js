@@ -5,7 +5,7 @@ var express = require('express'),
 	index = require('./routes/index.js'),
 	home = require('./routes/home.js'),
 	login = require('./routes/login.js'),
-	experiments = require('./routes/experiments.js')
+	workspace = require('./routes/workspace.js')
 
 var app = express();
 
@@ -24,12 +24,13 @@ app.set('view cache', false);
 swig.setDefaults({cache: false});
 
 app.get('/', index.guests);
+app.get('/dropDatabase', index.dropDatabase);
 
 app.post('/login', login.verify);
 app.get('/logout', login.logout);
 
-app.get('/experiments/:username', experiments.showAll);
-app.post('/:username/experiment/new', experiments.newExperiment);
+app.get('/:username/workspace', workspace.showAll);
+app.post('/:username/new/project', workspace.newProject);
 
 app.get('/home', home.welcome)
 

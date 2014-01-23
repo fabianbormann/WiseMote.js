@@ -2,7 +2,7 @@ var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
 var db = mongoose.connection;
 
-var Experiment = require('../models/Experiment.js');
+var Project = require('../models/Project.js');
 var User = require('../models/User.js');
 
 exports.showAll = function(req, res) {
@@ -11,14 +11,20 @@ exports.showAll = function(req, res) {
 	} else {
 		if(req.params.username == req.session.username) {
 			
-			User.find({'username': req.body.username}, function(err, user) {
+			User.find({'username': req.params.username}, function(err, user) {
 		        if(err) {
 		        	throw err;
 		        }
 		        else {
-		        	res.render('experiments', {
-						username : req.session.username,
-						experiments : user.experiments
+
+                    var userProjects = JSON.parse(user[0].projects);
+                    if(userProjects.length < 1) {
+                        userProjects = null;
+                    }
+
+		        	res.render('workspace', {
+						username : user[0].username,
+						projects : JSON.parse(userProjects)
 					});
 		        }
 	    	});
@@ -29,30 +35,30 @@ exports.showAll = function(req, res) {
 	}
 };
 
-exports.newExperiment = function(req, res) {
+exports.newProject = function(req, res) {
     if(req.params.username == req.session.username) {
         User.find({'username': req.body.username}, function(err, user) {
             if(err) {
                 throw err;
             }
             else {
-                var experiment = new Experiment({ 
-                    name: req.body.experimentName,
+                var project = new Project({ 
+                    name: req.body.projectName,
                     urns: req.body.urns,
                     duration: req.body.duration,
                     offset: req.body.offset
                 });
 
-                experiment.save();
+                project.save();
 
-                var experiments = JSON.parse(user.experiments);
-                experiments.push(experiment);
-                user.experiments = JSON.stringify(user.experiments);
+                var projects = JSON.parse(user.projects);
+                projects.push(project);
+                user.projects = JSON.stringify(user.projects);
                 user.save();
 
-                res.render('experiments', {
+                res.render('projects', {
                     username : req.session.username,
-                    experiments : user.experiments
+                    projects : user.projects
                 });
             }
         });

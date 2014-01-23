@@ -30,7 +30,10 @@ exports.verify = function(req, res) {
 	        }
 	        else {
 		        if (user.length < 1) {
-		        	var user = new User({ username: req.body.username });
+		        	var user = new User({ 
+		        		username: req.body.username,
+		        		projects: JSON.stringify(new Array())
+		        	});
 					user.save(function (err) {
 					  if (err)
 					  	throw err;
