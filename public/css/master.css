@@ -1,1 +1,12 @@
-#wrapper {width: 70%; margin: 0 auto;}
+body {font-family: 'Open Sans', sans-serif; background: url(../images/background_pattern.png); padding: 0; margin: 0;}
+
+a {text-decoration: none; color: #046380}
+
+#header { background: #333; margin-bottom: 60px; border-bottom: 1px solid #DDDDDD}
+
+#header .ui.header {margin: 0 auto; width: 33%; padding: 40px; color: rgba(255,255,255,.9)}
+#header .ui.header .sub.header {color: rgba(255,255,255,.6)}
+
+.ui.grid.basic.segment .column {margin: 10px 0 0 0;}
+
+#footer {margin-top: 60px}

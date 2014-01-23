@@ -29,6 +29,7 @@ app.post('/login', login.verify);
 app.get('/logout', login.logout);
 
 app.get('/experiments/:username', experiments.showAll);
+app.post('/:username/experiment/new', experiments.newExperiment);
 
 app.get('/home', home.welcome)
 

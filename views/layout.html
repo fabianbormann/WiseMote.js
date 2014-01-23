@@ -5,30 +5,62 @@
 
 	{% block head %}
 	<meta charset="UTF-8">
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans' rel='stylesheet' type='text/css'>
 	<link rel="stylesheet" href="/css/semantic.min.css">
 	<link rel="stylesheet" href="/css/master.css">
+	<script src="/js/jquery-1.9.1.js"></script>
+	<script src="/js/semantic.min.js"></script>
+	<script src="/js/master.js"></script>
 	{% endblock %}
 
 </head>
 <body>
-	<div id="wrapper">
-		<div id="header">
-			<div class="container">
-	            <div class="row">
-	                <div class="span12">
-	                    <div class="page-header">
-	                        <h1>JSmote for WISEBED Nodes</h1>
-	                    </div>
-	                </div>
-	            </div>
-	        </div>
+	<div class="ui grid">
+		<div id="header" class="row">
+			{% block menu %} 
+			<script type="text/javascript">
+			    $( document ).ready(function() {
+			        $('.ui.dropdown').dropdown();
+			    });
+			</script>
+			<div class="ui fixed transparent inverted main menu">
+			    <div class="container">
+			        <a href="/" class="item">
+			            <i class="home icon"></i>WiseMote.js
+			        </a>
+			        <div class="ui dropdown item">
+			          <i class="users icon"></i> Community <i class="dropdown icon"></i>
+			            <div class="menu">
+			                <a class="item">Share</a>
+			                <a class="item">Groups</a>
+			                <a class="item">Friends</a>
+			            </div>
+			        </div>
+			        <a href="/experiments/{{ username }}" class="item">
+			            <i class="lab icon"></i>Experiments
+			        </a>
+			        <div class="ui dropdown item">
+			          <i class="magic icon"></i> Examples <i class="dropdown icon"></i>
+			            <div class="menu">
+			                <a class="item">Basics</a>
+			            </div>
+			        </div>
+			        <a class="right floated item" href="/logout"><i class="sign out icon"></i>Logout</a>
+			    </div>
+			</div>
+			{% endblock %}
 		</div>
-		<div id="content">
-			{% block content %} {% endblock %}
+	</div>
+
+	<div id="wrapper" class="ui page grid">
+		<div id="content" class="row">
+			{% block content %}
+			{% endblock %}
 		</div>
-		<div id="footer">
-		 <hr />
-        <p>Bachelor thesis Javascript Interface for Remote Controlling WISEBED Nodes Fabian Bormann (Apache Open Source Licence) - <a href="https://github.com/fabianbormann/WiseMote.js">WiseMote.js on GitHub</a></p>
+		<div id="footer" class="sixteen wide column">
+			<div class="ui divider"></div>
+			<p>Bachelor thesis Javascript Interface for Remote Controlling WISEBED Nodes Fabian Bormann (Apache Open Source Licence)<br><a href="https://github.com/fabianbormann/WiseMote.js">Visit WiseMote.js on GitHub <i class="github icon"></i></a></p>
+		</div>
 	</div>
 </body>
 </html>

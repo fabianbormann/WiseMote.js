@@ -1,42 +1,9 @@
+var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
-
-mongoose.connect('mongodb://localhost/wisemote');
 var db = mongoose.connection;
 
-var wisebed = require('wisebed.js');
-
-var experimentSchema = mongoose.Schema({
-	id: {
-        type:Number,
-        required: true,
-        unique: true
-    },
-    name: {
-        type:String,
-        required: true
-    },
-    code: {
-        type:String
-    },
-    date: {
-        type:Date,
-        required: true
-    }
-});
-
-var userSchema = mongoose.Schema({
-    username: {
-        type:String,
-        required: true,
-        unique: true
-    },
-    experiments: {
-    	type:String
-    }
-});
-
-var User = mongoose.model('User', userSchema);
-var Experiment = mongoose.model('Experiment', experimentSchema);
+var Experiment = require('../models/Experiment.js');
+var User = require('../models/User.js');
 
 exports.showAll = function(req, res) {
 	if (!req.session.username) {
@@ -54,10 +21,48 @@ exports.showAll = function(req, res) {
 						experiments : user.experiments
 					});
 		        }
-	    	}
+	    	});
 		}
 		else {
 			res.redirect('/home');
 		}
 	}
 };
+
+exports.newExperiment = function(req, res) {
+    if(req.params.username == req.session.username) {
+        User.find({'username': req.body.username}, function(err, user) {
+            if(err) {
+                throw err;
+            }
+            else {
+                var experiment = new Experiment({ 
+                    name: req.body.experimentName,
+                    urns: req.body.urns,
+                    duration: req.body.duration,
+                    offset: req.body.offset
+                });
+
+                experiment.save();
+
+                var experiments = JSON.parse(user.experiments);
+                experiments.push(experiment);
+                user.experiments = JSON.stringify(user.experiments);
+                user.save();
+
+                res.render('experiments', {
+                    username : req.session.username,
+                    experiments : user.experiments
+                });
+            }
+        });
+    }
+    else {
+        res.redirect('/home');
+    }
+
+   
+
+
+    res.redirect('/home');
+}

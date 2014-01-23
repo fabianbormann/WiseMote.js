@@ -1,51 +1,62 @@
-{% extends 'userScreenLayout.html' %}
-{% block head %}
+{% extends 'layout.html' %}
 
-{% parent %}
-
-{% endblock %}
 {% block content %}
-    <!-- begin content -->
+<div class="sixteen wide column">
     <h1>Experiments</h1>
-    <br />
-    
-   <!-- <div>
-        Click on a experiment in the table to see more information like
-        your source code and the Node URNs.
-    </div> -->
+    <div class="ui divider"></div>
 
-    <div class="alert alert-info">
-        You don't have any experiments yet.
-    </div>               
-    
-    <table class="table table-striped">
-        <tr>
-            <td>#</td>
-            <td>Name</td>
-            <td>Reserved Nodes</td>
-            <td>Time</td>
+    <table class="ui table segment">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Reserved Nodes</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if experiments %}
+            {% for experiment in experiments %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ experiment.name }}</td>
+                    <td>{{ experiment.nodes }}</td>
+                    <td>{{ experiment.time }}</td>
+                </tr>
+            {% endfor %}
+        {% else %}
+        <tr class="warning">
+            <td colspan="4">You don't have any experiments yet.</td>
         </tr>
+        {% endif %}
+        </tbody>
+        <tfoot>
+        </tfoot>
     </table>
-    <br />
-    <a class="btn btn-large btn-success" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
-    <div id="newExperimentForm" style="display: none">
-        <form id="reservationForm" action="/experiment/{{ username }}/new" method="POST">
-            <label for="urnPrefix">URN Prefix</label>
-            <span class="uneditable-input" id="urnPrefix">urn:wisebed:uzl1:</span>
-            <label for="nodeUrns">Node URN's (use "," as delimiter)</label>
-            <textarea class="form-control" id="nodeUrns" rows="3"></textarea>
-            <br />                  
-            <label for="duration">Duration</label>
-            <input type="text" id="duration" name="duration" class="form-control" placeholder="Enter duration in minutes">
-            <label for="offset">Offset</label>
-            <input type="text" id="offset" name="offset" class="form-control" placeholder="Enter the offset in minutes">        
-            <br /><br />
-            <button type="submit" class="btn btn-default">Start reservation</button>
-        <form>
-    </div>
 
-    <script type="text/javascript">
-        var experiments = JSON.parse( {{ experiments }} ); 
-    </script>
+    <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
+    <div id="newExperimentForm" style="display: none">
+        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
+            <div class="field">
+                <label>Name</label>
+                <input type="text" name="experimentName" placeholder="Your experimentname">
+            </div>
+            <div class="field">
+                <label>Node URN's (use "," as delimiter)</label>
+                <textarea name="urns"></textarea>
+            </div>
+            <div class="field">
+                <label>Duration</label>
+                <input type="text" name="duration" placeholder="Enter duration in minutes">
+            </div>
+            <div class="field">
+                <label>Offset</label>
+                <input type="text" name="offset" placeholder="Enter the offset in minutes">
+            </div>   
+            <div class="ui divider"></div>
+            <button type="submit" class="ui small blue submit button">Start reservation</button>
+        </form>
+    </div>
+</div>
 
 {% endblock %}

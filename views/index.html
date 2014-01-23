@@ -2,43 +2,78 @@
 {% block head %}
 
 {% parent %}
-
+<script type="text/javascript">
+	$( document ).ready(function() {
+		$('.ui.selection.dropdown').dropdown();
+	});
+</script>
+{% endblock %}
+{% block menu %}
+	<h1 class="ui header">
+		WiseMote.js
+		<div class="sub header">Javascript Interface for Remote Controlling WISEBED Nodes</div>
+	</h1>
 {% endblock %}
 {% block content %}
-<div class="container">
-	<div class="row">
-		<div class="span6">
-			<form method="post" action="/login" id="loginForm">
-				<label>Username</label>
-				<input name="username" class="span3" type="text" placeholder="Please enter your username." required>
-				<select class="span3">
-					<option>@wisebed1.itm.uni-luebeck.de</option>
-				</select>
-				<label>Password</label>
-				<input type="password" name="password" required>
-
-				<label>URN Prefix</label>
-				<span class="uneditable-input">urn:wisebed:uzl1:</span>
-
-				<hr/><p>No account yet? <a href="http://wisebed.eu/site/index.php/register/">Register here!</a></p>
-				<input type="submit" class="btn btn-default" value="Login" >
-			</form>
-		</div>
-		<div class="span6">
-			<div class="hero-unit">
-				<h2>Introduction</h2>
-				<p>	 
-					The Wisebed Testbed enables the easy deployment of 
-					large scale wireless sensor network experiments without the need to buy the 
-					expensive sensor node hardware. However, programmers still have to learn an embedded 
-					programming language and put up with the tedious debugging characteristics of a large 
-					embedded network. To lower these prerequisites for starting with the development of 
-					sensor network applications (e.g., for students), this projects aims at creating a 
-					remote control interface for wisebed nodes, 
-					which allows the easy programming and debugging of these applications inside a Webbrowser.
-				</p>
+<div class="eight wide column">
+	<form method="post" action="/login" class="ui form segment">
+		<div class="field">
+			<label>Username</label>
+			<div class="ui left labeled icon input">
+				<input type="text" name="username" placeholder="Please enter your username" required>
+				<i class="user icon"></i>
+				<div class="ui corner label">
+					<i class="icon asterisk"></i>
+				</div>
 			</div>
 		</div>
+		<div class="field ui selection dropdown">
+			<input type="hidden" name="gender">
+			<div class="text">@wisebed1.itm.uni-luebeck.de</div>
+			<i class="dropdown icon"></i>
+			<div class="menu">
+				<div class="item active" data-value="@wisebed1.itm.uni-luebeck.de">@wisebed1.itm.uni-luebeck.de</div>
+			</div>
+		</div>
+		<div class="field">
+			<label>Password</label>
+			<div class="ui left labeled icon input">
+				<input type="password" name="password" required>
+				<i class="lock icon"></i>
+				<div class="ui corner label">
+					<i class="icon asterisk"></i>
+				</div>
+			</div>
+		</div>
+		<div class="field">
+			<label>URN Prefix</label>
+			<div class="ui left labeled input">
+				<input type="text" name="username" value="urn:wisebed:uzl1:" disabled="disabled">
+			</div>
+		</div>
+
+		<div class="ui divider sixteen wide column"></div>
+		<p>
+			No account yet?
+			<a href="http://wisebed.eu/site/index.php/register/">Register here!</a>
+		</p>
+
+		<input type="submit" class="ui small blue submit button" value="Login" >
+	</form>
+</div>
+<div class="eight wide column">
+	<div class="ui segment">
+		<h2>Introduction</h2>
+		<p>	 
+			The Wisebed Testbed enables the easy deployment of 
+			large scale wireless sensor network experiments without the need to buy the 
+			expensive sensor node hardware. However, programmers still have to learn an embedded 
+			programming language and put up with the tedious debugging characteristics of a large 
+			embedded network. To lower these prerequisites for starting with the development of 
+			sensor network applications (e.g., for students), this projects aims at creating a 
+			remote control interface for wisebed nodes, 
+			which allows the easy programming and debugging of these applications inside a Webbrowser.
+		</p>
 	</div>
 </div>
 {% endblock %}

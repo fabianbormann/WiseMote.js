@@ -1,22 +1,9 @@
+var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
-
 mongoose.connect('mongodb://localhost/wisemote');
 var db = mongoose.connection;
 
-var wisebed = require('wisebed.js');
-
-var userSchema = mongoose.Schema({
-    username: {
-        type:String,
-        required: true,
-        unique: true
-    },
-    experiments: {
-    	type:String
-    }
-});
-
-var User = mongoose.model('User', userSchema);
+var User = require('../models/User.js');
 
 exports.verify = function(req, res) {
 
@@ -34,13 +21,12 @@ exports.verify = function(req, res) {
 		]
 	};
 
-	testbed.login(credentials,loggin,redirect);
+	testbed.login(credentials,login,redirect);
 
-	function loggin(status) {
+	function login(status) {
 		User.find({'username': req.body.username}, function(err, user) {
 	        if(err) {
 	        	throw err;
-	        	
 	        }
 	        else {
 		        if (user.length < 1) {
