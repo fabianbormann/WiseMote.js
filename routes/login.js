@@ -1,6 +1,4 @@
-var mongoose = require('mongoose'),
-	crypto = require('crypto'),
-	request = require('request');
+var mongoose = require('mongoose');
 
 mongoose.connect('mongodb://localhost/wisemote');
 var db = mongoose.connection;
@@ -12,6 +10,9 @@ var userSchema = mongoose.Schema({
         type:String,
         required: true,
         unique: true
+    },
+    experiments: {
+    	type:String
     }
 });
 

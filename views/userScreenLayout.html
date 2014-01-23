@@ -4,63 +4,61 @@
 	<title>{% block title %}Javascript Interface for Remote Controlling WISEBED Nodes{% endblock %}</title>
 
 	{% block head %}
-	<meta charset="UTF-8">
-	<link rel="stylesheet" href="/css/bootstrap.css">
-	<link rel="stylesheet" href="/css/main.css">
+		<meta charset="UTF-8">
+		<link rel="stylesheet" href="/css/bootstrap.css">
+		<link rel="stylesheet" href="/css/main.css">
+		<script src="/js/jquery-1.9.1.js"></script>
+		<script src="/js/semantic.min.js"></script>
+		<script src="/js/master.js"></script>
 	{% endblock %}
 
 </head>
 <body>
-	<div id="top" class="top">
-		<div class="navbar navbar-inverse navbar-fixed-top" style="position: static;">
-            <div class="navbar-inner">
-                <div class="container">
-                    <a class="btn btn-navbar" data-toggle="collapse" data-target=".navbar-inverse-collapse">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </a>
-                    <a href="home" class="brand">JSmote</a>
-                    <div class="nav-collapse collapse navbar-inverse-collapse">
-                        <ul class="nav">
-                            <li class="active"><a href="home">Home</a></li>
-                            <li><a href="/experiments/{{ username }}" >Experiments</a></li>
-                            <li><a href="#">Share</a></li>
-                            <li><a href="#">Examples</a></li>
-                        </ul>
-                        <form class="navbar-search pull-left" action="">
-                            <input type="text" class="search-query span2" placeholder="Search"/>
-                        </form>
-                        <ul class="nav pull-right">
-                            <li><a href="/logout">Logout</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <br>
-	</div>
-	<div id="wrapper">
-		<div id="header">
-			<div class="container">
-	            <div class="row">
-	                <div class="span12">
-	                    <div class="page-header">
-	                        <h1>JSmote for WISEBED Nodes</h1>
-	                    </div>
-	                </div>
-	            </div>
-	        </div>
+	<div class="ui fixed transparent inverted main menu">
+		<div class="container">
+			<a class="launch item" href="/">
+				<div class="title item">
+					<b>WiseMote.js</b>
+				</div>
+			</a>
+			<a class="item" href="/home">Home</a>
+			<a class="item" href="/experiments/{{ username }}" >Experiments</a>
+			<div class="section ui dropdown link item" href="#">Community
+				<div class="menu">
+					<div class="active item">
+						<a href="/">Share</a>
+					</div>
+
+					<div class="item">
+						<a href="/">Groups</a>
+					</div>
+
+					<div class="item">
+						<a href="/">Friends</a>
+					</div>
+				</div>
+			</div>
+			<div class="section ui dropdown link item" href="#">Examples
+				<div class="menu">
+					<div class="active item">
+						<a href="/">Basics</a>
+					</div>
+				</div>
+			</div>
+			<a class="right floated item" href="/logout">Logout</a>
 		</div>
-		<div id="content">
+	</div>    
+	<div id="wrapper" class="ui page grid">
+		<h2 class="ui header">
+			JSmote for WISEBED Nodes
+		</h2>
+		<div class="ui divider"></div>
+		<div id="content" class="ui grid">
 			{% block content %} {% endblock %}
 		</div>
-		<div id="footer">
-		 <hr />
-        <p>Bachelor thesis Javascript Interface for Remote Controlling WISEBED Nodes Fabian Bormann (Apache Open Source Licence) - <a href="https://github.com/fabianbormann/WiseMote.js">WiseMote.js on GitHub</a></p>
-	</div>
-
-	<script src="/js/jquery-1.7.1.min.js"></script>
-	<script src="/js/main.js"></script>
+		<div id="footer" class="ui grid">
+			<div class="ui divider"></div>
+			<p>Bachelor thesis Javascript Interface for Remote Controlling WISEBED Nodes Fabian Bormann (Apache Open Source Licence) - <a href="https://github.com/fabianbormann/WiseMote.js">WiseMote.js on GitHub</a></p>
+		</div>
 </body>
 </html>
