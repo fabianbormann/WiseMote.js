@@ -8,7 +8,11 @@ var userSchema = mongoose.Schema({
     },
     projects: {
     	type:String
-    }
+    },
+    date: { 
+    	type: Date, 
+    	default: Date.now 
+    },
 });
 
 module.exports = mongoose.model('User', userSchema);

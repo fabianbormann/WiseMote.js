@@ -32,6 +32,8 @@ app.get('/logout', login.logout);
 app.get('/:username/workspace', workspace.showAll);
 app.post('/:username/new/project', workspace.newProject);
 
+app.get('/:username/project/:projectId', workspace.showProject);
+
 app.get('/home', home.welcome)
 
 

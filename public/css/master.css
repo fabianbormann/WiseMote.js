@@ -7,6 +7,12 @@ a {text-decoration: none; color: #046380}
 #header .ui.header {margin: 0 auto; width: 33%; padding: 40px; color: rgba(255,255,255,.9)}
 #header .ui.header .sub.header {color: rgba(255,255,255,.6)}
 
+.infoline {height: 70px;}
+
+tr.clickable {cursor: pointer;}
+
+#preview {width: 100%; height: 100%; background-color: #fff; border: none;}
+
 .ui.grid.basic.segment .column {margin: 10px 0 0 0;}
 
 #footer {margin-top: 60px}

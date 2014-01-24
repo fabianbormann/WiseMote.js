@@ -4,17 +4,22 @@
 <div class="eight wide column">
     <h1><i class="big code icon"></i>Projects</h1>
     <div class="ui divider"></div>
-    <p>Create a empty project and share it with other members. Clone or write some code snippets and start a experiment.</p>
-    <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Create a new project</a>
-    <div id="newExperimentForm" style="display: none">
-        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
+    <p class="infoline">Create a empty project and share it with other members. Clone or write some code snippets and start a experiment.</p>
+    <a class="ui small blue submit button" id="newProjectButton" onclick="showProjectForm();">Create a new project</a>
+    <div id="newProjectForm" style="display: none">
+        <form id="reservationForm" class="ui form segment" action="/{{ username }}/new/project" method="POST">
             <div class="field">
-                <label>Name</label>
-                <input type="text" name="projectName" placeholder="Your projectname">
+            <label>Name</label>
+            <div class="ui labeled input">
+                <input type="text" name="projectName" placeholder="Your projectname" required>
+                <div class="ui corner label">
+                    <i class="asterisk icon"></i>
+                </div>
+            </div>
             </div>
             <div class="field">
                 <label>Members</label>
-                <input type="text" name="offset" placeholder="Enter additional members">
+                <input type="text" name="members" placeholder="Enter additional members">
             </div>   
             <div class="ui divider"></div>
             <button type="submit" class="ui small blue submit button">Create project</button>
@@ -32,11 +37,11 @@
         <tbody>
         {% if projects %}
             {% for project in projects %}
-                <tr>
+                <tr class="clickable" onclick="document.location = '/{{ username }}/project/{{ project._id.toString() }}';">
                     <td>{{ loop.index }}</td>
                     <td>{{ project.name }}</td>
-                    <td>{{ project.nodes }}</td>
-                    <td>{{ project.time }}</td>
+                    <td>{{ project.members }}</td>
+                    <td>{{ project.date.toString() }}</td>
                 </tr>
             {% endfor %}
         {% else %}
@@ -52,13 +57,19 @@
 <div class="eight wide column">
     <h1><i class="big lab icon"></i>Experiments</h1>
     <div class="ui divider"></div>
-    <p>Visit currently running experiments or start a new one.</p>
+    <p class="infoline">Visit currently running experiments or start a new one.</p>
     <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
     <div id="newExperimentForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
-            <div class="field">
-                <label>Name</label>
-                <input type="text" name="experimentName" placeholder="Your experimentname">
+            <div class="ui selection dropdown">
+                <input type="hidden" name="useProject">
+                <div class="text">Project</div>
+                <i class="dropdown icon"></i>
+                <div class="menu">
+                    {% for project in projects %}
+                        <div class="item" data-value="{{ loop.index }}">{{ project.name }}</div>
+                    {% endfor %}
+                </div>
             </div>
             <div class="field">
                 <label>Node URN's (use "," as delimiter)</label>
@@ -86,13 +97,13 @@
             </tr>
         </thead>
         <tbody>
-        {% if projects %}
-            {% for project in projects %}
+        {% if experiments %}
+            {% for experiment in experiments %}
                 <tr>
                     <td>{{ loop.index }}</td>
-                    <td>{{ project.name }}</td>
-                    <td>{{ project.nodes }}</td>
-                    <td>{{ project.time }}</td>
+                    <td>{{ experiment.name }}</td>
+                    <td>{{ experiment.nodes }}</td>
+                    <td>{{ experiment.time }}</td>
                 </tr>
             {% endfor %}
         {% else %}

@@ -1,0 +1,65 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<link rel="stylesheet" href="/css/codemirror.css">
+{% parent %}
+<script src="/js/codemirror.js"></script>
+<script src="/js/mode/css.js"></script>
+<script src="/js/mode/xml.js"></script>
+<script src="/js/mode/javascript.js"></script>
+<script src="/js/mode/htmlmixed.js"></script>
+<script type="text/javascript">
+	var l = window.location;
+	var wisebedWebSocketBaseUrl = 'ws://' + l.host;
+	var wisebedBaseUrl = l.protocol + '//' + l.host;
+
+	$( document ).ready(function() {
+		var delay;
+        var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+            mode: 'text/html',
+            tabMode: 'indent'
+        });
+        editor.on("change", function() {
+            clearTimeout(delay);
+            delay = setTimeout(updatePreview, 300);
+        });
+
+        function updatePreview() {
+            var previewFrame = document.getElementById("preview");
+            var preview = previewFrame.contentDocument || previewFrame.contentWindow.document;
+            preview.open();
+            preview.write(editor.getValue());
+            preview.close();
+        }
+        setTimeout(updatePreview, 300);
+	});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="sixteen wide column">
+	<h1><i class="big code icon"></i>{{ project.name }}</h1>
+	<div class="ui divider"></div>
+</div>
+	<div class="eight wide column">
+		<form method="POST" action="/{{ username }}/project/{{ project._id }}/save">
+		<label>Project code:</label>
+		<div class="field">
+			<textarea id="code" value="{{ project.code.toString() }}"></textarea>
+		</div>    
+	</div>
+	<div class="eight wide column">
+		<label>Preview:</label><br>
+		<iframe id="preview"></iframe>  
+	</div>
+
+<div class="sixteen wide column">
+	<div class="ui divider"></div>
+	<div class="ui buttons">
+  		<button type="submit" class="ui blue button">Save</button>
+  		<div class="or"></div>
+  		<div class="ui green button">Start experiment</div>
+	</div>
+	</form>
+</div>
+{% endblock %}

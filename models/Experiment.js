@@ -11,9 +11,9 @@ var experimentSchema = mongoose.Schema({
     offset: {
         type:Number
     },
-    date: {
-        type:Date,
-        required: true
+    date: { 
+        type: Date, 
+        default: Date.now 
     },
     nodeUrns: {
         type:String

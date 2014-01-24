@@ -8,9 +8,9 @@ var projectSchema = mongoose.Schema({
     code: {
         type:String
     },
-    date: {
-        type:Date,
-        required: true
+    date: { 
+    	type: Date, 
+    	default: Date.now 
     },
     members: {
     	type:String
