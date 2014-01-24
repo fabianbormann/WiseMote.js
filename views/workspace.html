@@ -4,7 +4,22 @@
 <div class="eight wide column">
     <h1><i class="big code icon"></i>Projects</h1>
     <div class="ui divider"></div>
-
+    <p>Create a empty project and share it with other members. Clone or write some code snippets and start a experiment.</p>
+    <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Create a new project</a>
+    <div id="newExperimentForm" style="display: none">
+        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
+            <div class="field">
+                <label>Name</label>
+                <input type="text" name="projectName" placeholder="Your projectname">
+            </div>
+            <div class="field">
+                <label>Members</label>
+                <input type="text" name="offset" placeholder="Enter additional members">
+            </div>   
+            <div class="ui divider"></div>
+            <button type="submit" class="ui small blue submit button">Create project</button>
+        </form>
+    </div>
     <table class="ui table segment">
         <thead>
             <tr>
@@ -37,6 +52,7 @@
 <div class="eight wide column">
     <h1><i class="big lab icon"></i>Experiments</h1>
     <div class="ui divider"></div>
+    <p>Visit currently running experiments or start a new one.</p>
     <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
     <div id="newExperimentForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
@@ -60,4 +76,33 @@
             <button type="submit" class="ui small blue submit button">Start reservation</button>
         </form>
     </div>
+    <table class="ui table segment">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>State</th>
+                <th>Nodes</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% if projects %}
+            {% for project in projects %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ project.name }}</td>
+                    <td>{{ project.nodes }}</td>
+                    <td>{{ project.time }}</td>
+                </tr>
+            {% endfor %}
+        {% else %}
+        <tr class="warning">
+            <td colspan="4">There are no runing experiments.</td>
+        </tr>
+        {% endif %}
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+</div>
 {% endblock %}
