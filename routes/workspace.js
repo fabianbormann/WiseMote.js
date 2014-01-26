@@ -123,3 +123,16 @@ exports.showProject = function(req, res) {
         res.redirect('/home');
     }    
 }
+
+exports.saveProject = function(req, res) {
+    if(req.params.username == req.session.username) {
+        Project.find( {_id : req.params.projectId}, function(err, dbProject) {
+            dbProject[0].update( {code : req.body.code}, function () {
+                res.redirect('/'+req.params.username+'/project/'+req.params.projectId);  
+            });
+        });
+    }
+    else {
+        res.redirect('/home');
+    }    
+}

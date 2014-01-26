@@ -39,28 +39,30 @@
 
 {% block content %}
 <div class="sixteen wide column">
-	<h1><i class="big code icon"></i>{{ project.name }}</h1>
+	<h1><i class="big lab icon"></i>{{ project.name }}</h1>
 	<div class="ui divider"></div>
 </div>
-<div class="eight wide column">
-	<form method="POST" action="/{{ username }}/project/{{ project._id.toString() }}/save">
+<div class="sixteen wide column">
+	<label>Running Experiment:</label><br>
+	<iframe id="preview"></iframe>  
+</div>
+<div class="sixteen wide column">
+	<div class="ui top attached tabular menu">
+		<a class="active item">
+			Project settings
+		</a>
+		<a class="item">
+			Community
+		</a>
+	</div>
+	<div class="ui bottom attached segment">
+		<form method="POST" action="/{{ username }}/project/{{ project._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
 			<textarea id="code" name="code">{{ project.code }}</textarea>
-		</div>    
-	</div>
-	<div class="eight wide column">
-		<label>Preview:</label><br>
-		<iframe id="preview"></iframe>  
-	</div>
-
-	<div class="sixteen wide column">
+		</div>   
 		<div class="ui divider"></div>
-		<div class="ui buttons">
-			<button type="submit" class="ui blue button">Save</button>
-		</form>
-		<div class="or"></div>
-		<button class="ui green button">Start experiment</button>
+		<button type="submit" class="ui blue button">Save</button> 
 	</div>
 </div>
 {% endblock %}

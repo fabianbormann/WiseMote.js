@@ -43,7 +43,7 @@ exports.verify = function(req, res) {
 		        	
 		        }
 		        else {
-		        	req.session.username = user.username;
+		        	req.session.username = user[0].username;
 		        }
 
 		        res.redirect('/home');
@@ -54,6 +54,7 @@ exports.verify = function(req, res) {
 	function redirect() {
 		res.redirect('/');
 	}
+
 };
 
 exports.logout = function(req, res) { 

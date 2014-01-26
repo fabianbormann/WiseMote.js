@@ -1,5 +1,89 @@
 {% extends 'layout.html' %}
 
+{% block head %}
+{% parent %}
+<script type="text/javascript">
+
+    var selectedNodes = []; 
+
+    function refreshSelectedNodes (id, action) {
+        if (action) {
+            selectedNodes.push(id)
+        }
+        else {
+            selectedNodes.splice( $.inArray(id, selectedNodes), 1);
+        }
+
+        $("#nodeSelection").val(JSON.stringify(selectedNodes));
+
+        if(selectedNodes.length > 0) {
+            var inSelectedNodes = "";
+            for (var i = selectedNodes.length - 1; i >= 0; i--) {
+                inSelectedNodes += '<div class="green ui node label">'+selectedNodes[i]+'<i class="delete icon"></i></div>';
+            };
+            $("#selectedNodes")
+                        .removeClass( "yellow" )
+                        .html( inSelectedNodes );
+        }
+        else {
+            $("#selectedNodes")
+                        .addClass( "yellow" )
+                        .html( "You need to select any nodes" );
+        }
+
+    } 
+
+    $(" document ").ready(function() {
+
+        $('.ui.modal')
+            .modal()
+        ;
+
+        $('#selectNodes').click(function() {
+            $('.nodes.modal')
+            .modal('setting', 'closable', false)
+            .modal('show');
+        });
+
+        $('.projectSelection')
+            .dropdown({
+                onChange: function(key, value) {
+                    $("#selectedProject")
+                        .removeClass( "yellow" )
+                        .addClass( "green" )
+                        .html(value);
+            }
+        });
+
+        $.get("/testbed/nodes", function(nodes) {
+            var testbedNodes = JSON.parse(nodes);
+
+            $.each(testbedNodes, function(index, node) {
+                var nodeSensors = "";
+
+                $.each(node.capability, function(id, sensor) {
+                    var sensorname = sensor.name;
+                    sensorname = sensorname.substring(sensorname.indexOf("capability:")+11);
+                    nodeSensors += ','+sensorname;
+                });
+
+                $('#nodeTable > tbody:last').append('<tr><td>'+index+'</td><td>'+node.id+'</td><td>'+node.nodeType+'</td><td>'+nodeSensors+'</td><td><div class="ui large checkbox"><input type="checkbox" name="'+node.id+'"><label></label></div></td></tr>');
+                
+                $('.ui.checkbox')
+                    .checkbox({
+                        onEnable: function() {
+                            refreshSelectedNodes(this[0].name, true);
+                        },
+                        onDisable: function() {
+                            refreshSelectedNodes(this[0].name, false);
+                        }
+                    });
+            });
+        });
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <div class="eight wide column">
     <h1><i class="big code icon"></i>Projects</h1>
@@ -9,13 +93,13 @@
     <div id="newProjectForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/{{ username }}/new/project" method="POST">
             <div class="field">
-            <label>Name</label>
-            <div class="ui labeled input">
-                <input type="text" name="projectName" placeholder="Your projectname" required>
-                <div class="ui corner label">
-                    <i class="asterisk icon"></i>
+                <label>Name</label>
+                <div class="ui labeled input">
+                    <input type="text" name="projectName" placeholder="Your projectname" required>
+                    <div class="ui corner label">
+                        <i class="asterisk icon"></i>
+                    </div>
                 </div>
-            </div>
             </div>
             <div class="field">
                 <label>Members</label>
@@ -35,20 +119,20 @@
             </tr>
         </thead>
         <tbody>
-        {% if projects %}
+            {% if projects %}
             {% for project in projects %}
-                <tr class="clickable" onclick="document.location = '/{{ username }}/project/{{ project._id.toString() }}';">
-                    <td>{{ loop.index }}</td>
-                    <td>{{ project.name }}</td>
-                    <td>{{ project.members }}</td>
-                    <td>{{ project.date.toString() }}</td>
-                </tr>
+            <tr class="clickable" onclick="document.location = '/{{ username }}/project/{{ project._id.toString() }}';">
+                <td>{{ loop.index }}</td>
+                <td>{{ project.name }}</td>
+                <td>{{ project.members }}</td>
+                <td>{{ project.date.toString() }}</td>
+            </tr>
             {% endfor %}
-        {% else %}
-        <tr class="warning">
-            <td colspan="4">You don't have any projects yet.</td>
-        </tr>
-        {% endif %}
+            {% else %}
+            <tr class="warning">
+                <td colspan="4">You don't have any projects yet.</td>
+            </tr>
+            {% endif %}
         </tbody>
         <tfoot>
         </tfoot>
@@ -60,31 +144,73 @@
     <p class="infoline">Visit currently running experiments or start a new one.</p>
     <a class="ui small blue submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
     <div id="newExperimentForm" style="display: none">
-        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/new" method="POST">
-            <div class="ui selection dropdown">
+        <form id="reservationForm" class="ui form segment" action="/{{ username }}/experiment/start" method="POST">
+            <input type="hidden" name="nodeSelection" id="nodeSelection">
+            <div class="ui nodes modal">
+                <i class="circular inverted red close icon"></i>
+                <div class="header">
+                    Add nodes
+                </div>
+                <div class="content ui page grid">
+                    <h3>Nodes</h3>
+                    <div id="nodeTableContainer" class="sixteen wide column">
+                        <table id="nodeTable" class="ui celled table segment">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Node URN</th>
+                                    <th>Type</th>
+                                    <th>Sensors</th>
+                                    <th>Selection</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                            <tfoot>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+                <div class="actions">
+                    <div class="ui button">Cancel</div>
+                    <div class="ui button">OK</div>
+                </div>
+            </div>
+            <h2>Start experiment</h2>
+            <div class="ui divider"></div>
+            <div id="selectedProject" class="ui small yellow message">Please select a project</div>
+            <div class="ui pointing projectSelection dropdown labeled icon button">
+                <i class="code icon"></i> Projects
                 <input type="hidden" name="useProject">
-                <div class="text">Project</div>
-                <i class="dropdown icon"></i>
                 <div class="menu">
                     {% for project in projects %}
-                        <div class="item" data-value="{{ loop.index }}">{{ project.name }}</div>
+                    <div class="item" data-value="{{ loop.index }}">{{ project.name }}</div>
                     {% endfor %}
                 </div>
             </div>
+            <div class="ui divider"></div>
+            <div id="selectedNodes" class="ui small yellow message">You need to select any nodes</div>
             <div class="field">
-                <label>Node URN's (use "," as delimiter)</label>
-                <textarea name="urns"></textarea>
+                <label>Node URN's</label>
+                <div class="nodes"></div>
             </div>
+            <button type="button" class="ui small green labeled icon button" id="selectNodes"><i class="add icon"></i> Select nodes</button>
+            <div class="ui divider"></div>
             <div class="field">
                 <label>Duration</label>
-                <input type="text" name="duration" placeholder="Enter duration in minutes">
+                <div class="ui labeled input">
+                    <input type="text" name="duration" placeholder="Enter duration in minutes" required>
+                    <div class="ui corner label">
+                        <i class="asterisk icon"></i>
+                    </div>
+                </div>
             </div>
             <div class="field">
                 <label>Offset</label>
                 <input type="text" name="offset" placeholder="Enter the offset in minutes">
             </div>   
             <div class="ui divider"></div>
-            <button type="submit" class="ui small blue submit button">Start reservation</button>
+            <button type="submit" class="ui small blue labeled icon submit button"><i class="play icon"></i>Start reservation</button>
         </form>
     </div>
     <table class="ui table segment">
@@ -97,20 +223,20 @@
             </tr>
         </thead>
         <tbody>
-        {% if experiments %}
+            {% if experiments %}
             {% for experiment in experiments %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ experiment.name }}</td>
-                    <td>{{ experiment.nodes }}</td>
-                    <td>{{ experiment.time }}</td>
-                </tr>
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ experiment.name }}</td>
+                <td>{{ experiment.nodes }}</td>
+                <td>{{ experiment.time }}</td>
+            </tr>
             {% endfor %}
-        {% else %}
-        <tr class="warning">
-            <td colspan="4">There are no runing experiments.</td>
-        </tr>
-        {% endif %}
+            {% else %}
+            <tr class="warning">
+                <td colspan="4">There are no runing experiments.</td>
+            </tr>
+            {% endif %}
         </tbody>
         <tfoot>
         </tfoot>

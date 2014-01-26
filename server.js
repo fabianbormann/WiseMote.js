@@ -5,7 +5,8 @@ var express = require('express'),
 	index = require('./routes/index.js'),
 	home = require('./routes/home.js'),
 	login = require('./routes/login.js'),
-	workspace = require('./routes/workspace.js')
+	workspace = require('./routes/workspace.js'),
+	testbed = require('./routes/testbed.js');
 
 var app = express();
 
@@ -31,11 +32,15 @@ app.get('/logout', login.logout);
 
 app.get('/:username/workspace', workspace.showAll);
 app.post('/:username/new/project', workspace.newProject);
+app.post('/:username/project/:projectId/save', workspace.saveProject);
 
 app.get('/:username/project/:projectId', workspace.showProject);
 
 app.get('/home', home.welcome)
 
+app.get("/testbed/nodes", testbed.getNodes);
+
+app.post("/:username/experiment/start", testbed.reserveNodes);
 
 app.listen(3000);
 console.log('Listening on port 3000');

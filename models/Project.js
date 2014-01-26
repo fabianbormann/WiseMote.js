@@ -6,7 +6,8 @@ var projectSchema = mongoose.Schema({
         required: true
     },
     code: {
-        type:String
+        type:String,
+        default: "<html>\n<head>\n<style>\nbody {font-family: 'Open Sans', sans-serif;}\n</style>\n</head>\n<body>\n<h1>New project</h1>\n<p>write some code and start a new experiment.</p>\n</body>\n</html>"
     },
     date: { 
     	type: Date, 

@@ -18,7 +18,7 @@ var experimentSchema = mongoose.Schema({
     nodeUrns: {
         type:String
     },
-    visitors: {
+    publicLink: {
         type:String
     },
     console: {
