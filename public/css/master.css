@@ -13,7 +13,8 @@ tr.clickable {cursor: pointer;}
 
 #nodeTableContainer {height: 300px; overflow: scroll}
 
-#preview {width: 100%; height: 100%; background-color: #fff; border: none;}
+#preview {width: 100%; min-height: 330px; background-color: #fff; border: none;}
+.CodeMirror.cm-s-default {min-height: 330px;}
 
 .ui.grid.basic.segment .column {margin: 10px 0 0 0;}
 

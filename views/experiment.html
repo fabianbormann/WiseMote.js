@@ -56,7 +56,7 @@
 		</a>
 	</div>
 	<div class="ui bottom attached segment">
-		<form method="POST" action="/{{ username }}/project/{{ project._id.toString() }}/save">
+		<form method="POST" action="/{{ email }}/project/{{ project._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
 			<textarea id="code" name="code">{{ project.code }}</textarea>

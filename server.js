@@ -26,21 +26,16 @@ swig.setDefaults({cache: false});
 
 app.get('/', index.guests);
 app.get('/dropDatabase', index.dropDatabase);
-
-app.post('/login', login.verify);
 app.get('/logout', login.logout);
-
-app.get('/:username/workspace', workspace.showAll);
-app.post('/:username/new/project', workspace.newProject);
-app.post('/:username/project/:projectId/save', workspace.saveProject);
-
-app.get('/:username/project/:projectId', workspace.showProject);
-
+app.get('/workspace', workspace.showAll);
+app.get('/project/:projectId', workspace.showProject);
 app.get('/home', home.welcome)
+app.get('/testbed/nodes', testbed.getNodes);
 
-app.get("/testbed/nodes", testbed.getNodes);
-
-app.post("/:username/experiment/start", testbed.reserveNodes);
+app.post('/new/project', workspace.newProject);
+app.post('/project/:projectId/save', workspace.saveProject);
+app.post('/experiment/start', testbed.reserveNodes);
+app.post('/login', login.verify);
 
 app.listen(3000);
 console.log('Listening on port 3000');

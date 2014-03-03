@@ -32,18 +32,49 @@
 			preview.close();
 		}
 
+        $('.ui.modal').modal();
+
+        $('.ui.checkbox').checkbox();
+
+        $('#nodeConfig').click(function() {
+            $('.virtualNode.modal')
+            .modal('setting', 'closable', false)
+            .modal('show');
+        });
+
 		setTimeout(updatePreview, 300);
 	});
 </script>
 {% endblock %}
 
 {% block content %}
+<div class="ui virtualNode modal">
+    <i class="circular inverted red close icon"></i>
+    <div class="header">
+        Test node configuration
+    </div>
+    <div class="content">
+	    <label>Current LED state</label>
+	    <div class="ui toggle checkbox">
+	  		<input type="checkbox" name="ledState">
+	  		<label>Off</label>
+		</div>
+    </div>
+    <div class="actions">
+        <div class="ui button">Cancel</div>
+        <div class="ui button">OK</div>
+    </div>
+</div>
 <div class="sixteen wide column">
 	<h1><i class="big code icon"></i>{{ project.name }}</h1>
+	<button id="nodeConfig" class="ui red button">
+		<i class="wrench icon"></i>
+  		Configuration
+	</button>
 	<div class="ui divider"></div>
 </div>
 <div class="eight wide column">
-	<form method="POST" action="/{{ username }}/project/{{ project._id.toString() }}/save">
+	<form method="POST" action="/project/{{ project._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
 			<textarea id="code" name="code">{{ project.code }}</textarea>
@@ -51,9 +82,10 @@
 	</div>
 	<div class="eight wide column">
 		<label>Preview:</label><br>
-		<iframe id="preview"></iframe>  
+		<div class="field">
+			<iframe id="preview"></iframe>
+		</div>  
 	</div>
-
 	<div class="sixteen wide column">
 		<div class="ui divider"></div>
 		<div class="ui buttons">

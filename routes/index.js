@@ -5,7 +5,7 @@ var Project = require('../models/Project.js');
 var User = require('../models/User.js');
 
 exports.guests = function(req, res){
-	if (!req.session.username) {
+	if (!req.session.email) {
 		res.render('index');
 	} else {
 		res.redirect('/home');

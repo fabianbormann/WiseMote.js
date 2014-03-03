@@ -16,8 +16,8 @@ exports.getNodes = function(req, res) {
 
 	var credentials = { "authenticationData" : [
 		{"urnPrefix" : "urn:wisebed:uzl1:",
-		"username"  : "user1",
-		"password"  : "user1"}   
+		"username"  : req.session.email,
+		"password"  : req.session.password}   
 	]};
 
 	testbed.getWiseML(null,
@@ -25,14 +25,17 @@ exports.getNodes = function(req, res) {
 		res.send(JSON.stringify(wiseml.setup.node));
 	}, 
 	function(err) {
-		if(err) throw err;
+		if(err) {
+			console.log('Could not fetch sensor node information form portal server.');
+			console.log(JSON.stringify(err));
+		}
 	},
 	"json", null);
 
 }
 
 exports.reserveNodes = function(req, res) {
-    var username = req.session.username;
+    var email = req.session.email;
     var nodes = JSON.parse(req.body.nodeSelection);
     var experimentDuration = req.body.duration;
     var experimentOffset = req.body.offset;

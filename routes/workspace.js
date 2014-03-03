@@ -6,87 +6,75 @@ var Project = require('../models/Project.js');
 var User = require('../models/User.js');
 
 exports.showAll = function(req, res) {
-	if (!req.session.username) {
+	if (!req.session.email) {
 		res.redirect('/');
-	} else {
-		if(req.params.username == req.session.username) {
-			
-			User.find({'username': req.params.username}, function(err, user) {
-		        if(err) {
-		        	throw err;
-		        }
-		        else {
-                    var userProjects = JSON.parse(user[0].projects);
-                    if(userProjects.length < 1) {
-                        userProjects = null;
+	}
+    else {
+		User.find({'email': req.session.email}, function(err, user) {
+	        if(err) {
+	        	throw err;
+	        }
+	        else {
+                var userProjects = JSON.parse(user[0].projects);
+                if(userProjects.length < 1) {
+                    userProjects = null;
+                    res.render('workspace', {
+                        projects : userProjects
+                    });
+                }
+                else {
+                    Project.find({ _id : { $in : userProjects } }, function(err, dbProjects) {
                         res.render('workspace', {
-                            username : user[0].username,
-                            projects : userProjects
+                            projects : dbProjects
                         });
-                    }
-                    else {
-                        Project.find({ _id : { $in : userProjects } }, function(err, dbProjects) {
-                            res.render('workspace', {
-                                username : user[0].username,
-                                projects : dbProjects
-                            });
-                        });
-                    }
-		        }
-	    	});
-		}
-		else {
-			res.redirect('/home');
-		}
+                    });
+                }
+	        }
+    	});
 	}
 };
 
-exports.newProject = function(req, res) {
-    if(req.params.username == req.session.username) {
-        User.find({'username': req.params.username}, function(err, user) {
-            if(err) {
-                throw err;
+exports.newProject = function(req, res) {  
+    User.find({'email': req.session.email}, function(err, user) {
+        if(err) {
+            throw err;
+        }
+        else {
+            var projectMembers = req.body.members;
+            if(projectMembers) {
+                projectMembers = user[0].email+","+projectMembers;
             }
             else {
-                var projectMembers = req.body.members;
-                if(projectMembers) {
-                    projectMembers = user[0].username+","+projectMembers;
-                }
-                else {
-                    projectMembers = user[0].username;
-                }
-
-                var project = new Project({ 
-                    name: req.body.projectName,
-                    members: projectMembers                 
-                });
-
-                project.save(function(err, emptyProject) {
-                    if (err) 
-                        throw err;
-                    else {
-                        var projects = JSON.parse(user[0].projects);
-                        projects.push(emptyProject._id);
-                        user[0].update( {projects : JSON.stringify(projects)}, function () {
-                            res.redirect('/'+req.params.username+'/workspace');  
-                        });
-                    }
-                });  
+                projectMembers = user[0].email;
             }
-        });
-    }
-    else {
-        res.redirect('/home');
-    }
+
+            var project = new Project({ 
+                name: req.body.projectName,
+                members: projectMembers                 
+            });
+
+            project.save(function(err, emptyProject) {
+                if (err) 
+                    throw err;
+                else {
+                    var projects = JSON.parse(user[0].projects);
+                    projects.push(emptyProject._id);
+                    user[0].update( {projects : JSON.stringify(projects)}, function () {
+                        res.redirect('/workspace');  
+                    });
+                }
+            });  
+        }
+    });
 }
 
 exports.showProject = function(req, res) {
-    if(req.params.username == req.session.username) {
-        User.find({'username': req.params.username}, function(err, user) {
-            if(err) {
-                throw err;
-            }
-            else {
+    User.findOne({'email': req.session.email}, function(err, user) {
+        if(err) {
+            throw err;
+        }
+        else {
+            if(user) { 
                 Array.prototype.contains = function(k, callback) {
                     var self = this;
                     return (function check(i) {
@@ -102,13 +90,12 @@ exports.showProject = function(req, res) {
                     }(0));
                 }
 
-                var projects = JSON.parse(user[0].projects);
+                var projects = JSON.parse(user.projects);
 
                 Project.find( {_id : req.params.projectId}, function(err, dbProject) {
                     projects.contains(dbProject[0]._id.toString(), function(pass) {
                         if (pass) {
                             res.render('project', {
-                                username : req.params.username,
                                 project : dbProject[0]
                             });
                         } else {
@@ -117,22 +104,17 @@ exports.showProject = function(req, res) {
                     });
                 }); 
             }
-        });
-    }
-    else {
-        res.redirect('/home');
-    }    
+            else {
+                res.redirect('/');
+            }
+        }
+    });
 }
 
 exports.saveProject = function(req, res) {
-    if(req.params.username == req.session.username) {
-        Project.find( {_id : req.params.projectId}, function(err, dbProject) {
-            dbProject[0].update( {code : req.body.code}, function () {
-                res.redirect('/'+req.params.username+'/project/'+req.params.projectId);  
-            });
+    Project.find( {_id : req.params.projectId}, function(err, dbProject) {
+        dbProject[0].update( {code : req.body.code}, function () {
+            res.redirect('/project/'+req.params.projectId);  
         });
-    }
-    else {
-        res.redirect('/home');
-    }    
+    });
 }

@@ -13,25 +13,24 @@ exports.verify = function(req, res) {
   	};
 
 	var testbed = new wisebed.Wisebed(config.rest_api_base_url, config.websocket_base_url);
-	
 	var credentials = { "authenticationData" : [
 	      {"urnPrefix" : "urn:wisebed:uzl1:",
-	      "username"  : "user1",
-	      "password"  : "user1"}   
+	      "username"  : req.body.email,
+	      "password"  : req.body.password}   
 		]
 	};
 
 	testbed.login(credentials,login,redirect);
 
 	function login(status) {
-		User.find({'username': req.body.username}, function(err, user) {
+		User.find({'email': req.body.email}, function(err, user) {
 	        if(err) {
 	        	throw err;
 	        }
 	        else {
 		        if (user.length < 1) {
 		        	var user = new User({ 
-		        		username: req.body.username,
+		        		email: req.body.email,
 		        		projects: JSON.stringify(new Array())
 		        	});
 					user.save(function (err) {
@@ -39,11 +38,13 @@ exports.verify = function(req, res) {
 					  	throw err;
 					});
 
-					req.session.username = req.body.username;
+					req.session.email = req.body.email;
+					req.session.password = req.body.password;
 		        	
 		        }
 		        else {
-		        	req.session.username = user[0].username;
+		        	req.session.email = user[0].email;
+		        	req.session.password = req.body.password;
 		        }
 
 		        res.redirect('/home');
@@ -58,7 +59,8 @@ exports.verify = function(req, res) {
 };
 
 exports.logout = function(req, res) { 
-	delete req.session.username;
+	delete req.session.email;
+	delete req.session.password;
   	res.redirect('/');
 };
 
