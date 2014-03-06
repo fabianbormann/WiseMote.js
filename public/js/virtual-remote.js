@@ -1,19 +1,29 @@
 var JsMote = (function() {
 
-	var virtualNode = function(config) {
-		var ledState = config.led;
-		var temperature = config.temperature;
-		var light = config.light;
-		var delay = config.delay; 
+	 var virtualNode = function() {
+		this.ledState = false;
+		this.temperature = 20;
+		this.light = 55;
+		this.delay = 1000; 
 
-		var request = function(message) {
+		function configure(config) {
+			this.ledState = config.led;
+			this.temperature = config.temperature;
+			this.light = config.light;
+			this.delay = config.delay; 			
+		}
+
+		this.request = function(message) {
 			switch(message.task) {
-				case "switchLed": 
+				case 0:
+					console.log("ok"); 
 					ledState = message.params;
 					response({
 						content : message.params,
 						callback : message.callback
 					});
+					break;
+				default: throw new Error('Illegal arguments!')
 			}
 		}
 
@@ -25,7 +35,9 @@ var JsMote = (function() {
 	var remote = function() {
 
 		this.start = function(config) {
-	    	virtualNode(config);
+	    	if(config) {
+	    		virtualNode.configure(config);
+	    	}
     	}	
 
 		/**
@@ -108,11 +120,11 @@ var JsMote = (function() {
 		this.switchLed  = function(state, callback){
 				
 			var message = {};
-			message.task = "switchLed";
+			message.task = 0;
 			message.params = state;
 			message.callback = callback;
 
-			virtualNode.request(message);
+			this.virtualNode.request(message);
 		};
 	}
     return remote;

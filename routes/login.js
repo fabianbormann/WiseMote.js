@@ -5,6 +5,12 @@ var db = mongoose.connection;
 
 var User = require('../models/User.js');
 
+exports.devLogin = function(req, res) {
+    req.session.email = "bormann@informatik.uni-luebeck.de";
+   	req.session.password = "nopassword";
+    res.redirect('/home');
+}
+
 exports.verify = function(req, res) {
 
 	var config =  {
@@ -53,7 +59,9 @@ exports.verify = function(req, res) {
 	}
 
 	function redirect() {
-		res.redirect('/');
+		res.render('index', {
+			error : "Login failed! Please check if your password and email is correct."
+		});
 	}
 
 };

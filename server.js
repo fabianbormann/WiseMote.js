@@ -37,5 +37,7 @@ app.post('/project/:projectId/save', workspace.saveProject);
 app.post('/experiment/start', testbed.reserveNodes);
 app.post('/login', login.verify);
 
+app.get('/devLogin', login.devLogin);
+
 app.listen(3000);
 console.log('Listening on port 3000');

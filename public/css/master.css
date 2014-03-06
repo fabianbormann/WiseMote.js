@@ -2,7 +2,7 @@ body {font-family: 'Open Sans', sans-serif; background: url(../images/background
 
 a {text-decoration: none; color: #046380}
 
-#header { background: #333; margin-bottom: 60px; border-bottom: 1px solid #DDDDDD}
+#header { background: rgba(30,30,30,0.8); margin-bottom: 60px; border-bottom: 1px solid #DDDDDD}
 
 #header .ui.header {margin: 0 auto; width: 33%; padding: 40px; color: rgba(255,255,255,.9)}
 #header .ui.header .sub.header {color: rgba(255,255,255,.6)}
@@ -21,3 +21,5 @@ tr.clickable {cursor: pointer;}
 .ui.node.label {margin: 0.25em !important;}
 
 #footer {margin-top: 60px}
+
+.ui.error.message {margin-bottom: 15px;}

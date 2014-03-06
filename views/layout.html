@@ -51,9 +51,10 @@
 			{% endblock %}
 		</div>
 	</div>
-
 	<div id="wrapper" class="ui page grid">
 		<div id="content" class="row">
+			{% block message %}
+			{% endblock %}
 			{% block content %}
 			{% endblock %}
 		</div>
