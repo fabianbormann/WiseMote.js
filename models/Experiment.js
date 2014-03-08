@@ -5,11 +5,11 @@ var experimentSchema = mongoose.Schema({
         type:String,
         required: true
     },
-    duration: {
-        type:Number
+    from: {
+        type: Date
     },
-    offset: {
-        type:Number
+    to: {
+        type: Date
     },
     date: { 
         type: Date, 
@@ -18,7 +18,7 @@ var experimentSchema = mongoose.Schema({
     nodeUrns: {
         type:String
     },
-    publicLink: {
+    name: {
         type:String
     },
     console: {

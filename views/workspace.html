@@ -1,7 +1,12 @@
 {% extends 'layout.html' %}
 
 {% block head %}
+<link rel="stylesheet" href="/css/pikaday.css">
+<link rel="stylesheet" href="/css/jquery.timepicker.css">
 {% parent %}
+<script src="/js/jquery.timepicker.min.js"></script>
+<script src="/js/moment.min.js"></script>
+<script src="/js/pikaday.js"></script>
 <script type="text/javascript">
 
     var selectedNodes = []; 
@@ -11,6 +16,7 @@
             selectedNodes.push(id)
         }
         else {
+            console.log(id)
             selectedNodes.splice( $.inArray(id, selectedNodes), 1);
         }
 
@@ -19,18 +25,24 @@
         if(selectedNodes.length > 0) {
             var inSelectedNodes = "";
             for (var i = selectedNodes.length - 1; i >= 0; i--) {
-                inSelectedNodes += '<div class="green ui node label">'+selectedNodes[i]+'<i class="delete icon"></i></div>';
+                inSelectedNodes += '<div class="green ui node label">'+selectedNodes[i]+'<i class="delete icon" id="'+selectedNodes[i]+'"></i></div>';
             };
+
             $("#selectedNodes")
-                        .removeClass( "yellow" )
-                        .html( inSelectedNodes );
+                .removeClass( "yellow" )
+                .html( inSelectedNodes );
         }
         else {
             $("#selectedNodes")
-                        .addClass( "yellow" )
-                        .html( "You need to select any nodes" );
+                .addClass( "yellow" )
+                .html( "You need to select any nodes" );
         }
 
+        $('.delete.icon').click(function() {
+            var hexId = "0"+$( this ).attr('id').substring($( this ).attr('id').indexOf("x"));
+            $("#"+hexId).removeAttr('checked');
+            refreshSelectedNodes($( this ).attr('id'), false);
+        });
     } 
 
     $( document ).ready(function() {
@@ -55,6 +67,43 @@
             }
         });
 
+        var startDatePicker = new Pikaday(
+        {
+            field: document.getElementById('startDatePicker'),
+            firstDay: 1,
+            minDate: new Date(moment().year()+'-01-01'),
+            maxDate: new Date((moment().year()+1)+'-12-31'),
+            yearRange: [moment().year(),(moment().year()+1)],
+            onSelect: function() {
+                var date = document.createTextNode(this.getMoment().format('Do MMMM YYYY') + ' ');
+            }
+        });
+
+        startDatePicker.setMoment(moment());
+
+        var endDatePicker = new Pikaday(
+        {
+            field: document.getElementById('endDatePicker'),
+            firstDay: 1,
+            minDate: new Date(moment().year()+'-01-01'),
+            maxDate: new Date((moment().year()+1)+'-12-31'),
+            yearRange: [moment().year(),(moment().year()+1)],
+            onSelect: function() {
+                var date = document.createTextNode(this.getMoment().format('Do MMMM YYYY') + ' ');
+            }
+        });
+
+        endDatePicker.setMoment(moment());
+
+        $('#startTimePicker').timepicker({ 'timeFormat': 'H:i' });
+        $('#startTimePicker').timepicker('setTime', new Date());
+
+        $('#endTimePicker').timepicker({ 'timeFormat': 'H:i' });
+        timeOffset = new Date();
+        timeOffset.setMinutes(timeOffset.getMinutes()+30);
+
+        $('#endTimePicker').timepicker('setTime', timeOffset);
+
         $.get("/testbed/nodes", function(nodes) {
             var testbedNodes = JSON.parse(nodes);
 
@@ -63,11 +112,12 @@
 
                 $.each(node.capability, function(id, sensor) {
                     var sensorname = sensor.name;
+                    node.hexId = node.id.substring(node.id.indexOf("x"));
                     sensorname = sensorname.substring(sensorname.indexOf("capability:")+11);
                     nodeSensors += ','+sensorname;
                 });
 
-                $('#nodeTable > tbody:last').append('<tr><td>'+index+'</td><td>'+node.id+'</td><td>'+node.nodeType+'</td><td>'+nodeSensors+'</td><td><div class="ui large checkbox"><input type="checkbox" name="'+node.id+'"><label></label></div></td></tr>');
+                $('#nodeTable > tbody:last').append('<tr><td>'+index+'</td><td>'+node.id+'</td><td>'+node.nodeType+'</td><td>'+nodeSensors+'</td><td><div class="ui large checkbox"><input type="checkbox" id="0'+node.hexId+'" name="'+node.id+'"><label></label></div></td></tr>');
                 
                 $('.ui.checkbox')
                     .checkbox({
@@ -178,13 +228,18 @@
             </div>
             <h2>Start experiment</h2>
             <div class="ui divider"></div>
+            <div class="field">
+                <label>Name (optional)</label>
+                <input type="text" name="experimentName" placeholder="Project name will be used as default"> 
+            </div>
+            <div class="ui divider"></div>
             <div id="selectedProject" class="ui small yellow message">Please select a project</div>
             <div class="ui pointing projectSelection dropdown labeled icon button">
                 <i class="code icon"></i> Projects
                 <input type="hidden" name="useProject">
                 <div class="menu">
                     {% for project in projects %}
-                    <div class="item" data-value="{{ loop.index }}">{{ project.name }}</div>
+                    <div class="item" data-value="{{ project._id.toString() }}">{{ project.name }}</div>
                     {% endfor %}
                 </div>
             </div>
@@ -197,17 +252,46 @@
             <button type="button" class="ui small green labeled icon button" id="selectNodes"><i class="add icon"></i> Select nodes</button>
             <div class="ui divider"></div>
             <div class="field">
-                <label>Duration</label>
-                <div class="ui labeled input">
-                    <input type="text" name="duration" placeholder="Enter duration in minutes" required>
-                    <div class="ui corner label">
-                        <i class="asterisk icon"></i>
+                <label>Start</label>
+                <div class="ui grid">
+                    <div class="eight wide column">
+                        <div class="ui labeled input">
+                            <input type="text" name="startDate" id="startDatePicker"> 
+                            <div class="ui corner label">
+                                <i class="asterisk icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="eight wide column">
+                        <div class="ui labeled input">
+                            <input type="text" name="startTime" id="startTimePicker"> 
+                            <div class="ui corner label">
+                                <i class="asterisk icon"></i>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="field">
-                <label>Offset</label>
-                <input type="text" name="offset" placeholder="Enter the offset in minutes">
+                <label>End</label>
+                <div class="ui grid">
+                    <div class="eight wide column">
+                        <div class="ui labeled input">
+                            <input type="text" name="endDate" id="endDatePicker"> 
+                            <div class="ui corner label">
+                                <i class="asterisk icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="eight wide column">
+                        <div class="ui labeled input">
+                            <input type="text" name="endTime" id="endTimePicker"> 
+                            <div class="ui corner label">
+                                <i class="asterisk icon"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>   
             <div class="ui divider"></div>
             <button type="submit" class="ui small green labeled icon submit button"><i class="play icon"></i>Start reservation</button>

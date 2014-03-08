@@ -1,25 +1,54 @@
 var JsMote = (function() {
 
-	 var virtualNode = function() {
-		this.ledState = false;
-		this.temperature = 20;
-		this.light = 55;
-		this.delay = 1000; 
+	var virtualNode;
 
-		function configure(config) {
-			this.ledState = config.led;
-			this.temperature = config.temperature;
-			this.light = config.light;
-			this.delay = config.delay; 			
+	function VirtualNode () {
+		var ledState = false;
+		var temperature = 20;
+		var light = 55;
+		var delay = 1000; 
+
+		this.configure = function(config) {
+			ledState = config.led;
+			temperature = config.temperature;
+			light = config.light;
+			delay = config.delay; 		
 		}
 
 		this.request = function(message) {
 			switch(message.task) {
 				case 0:
-					console.log("ok"); 
 					ledState = message.params;
 					response({
 						content : message.params,
+						callback : message.callback
+					});
+					break;
+				case 1:
+					response({
+						content : message.params,
+						callback : message.callback
+					});
+					break;
+				case 2:
+					var result;
+					if(message.params == "light") {
+						result = light;
+					}
+					else if(message.params == "temperature") {
+						result = temperature;
+					}
+					else {
+						result = "error: unknown sensor "+message.params 
+					}
+					response({
+						content : result,
+						callback : message.callback
+					});
+					break;
+				case 3:
+					response({
+						content : "broadcasting: "+message.params,
 						callback : message.callback
 					});
 					break;
@@ -28,21 +57,22 @@ var JsMote = (function() {
 		}
 
 		function response (message) {
-			setTimeout(message.callback(message.params), delay);
+			setTimeout(function(){ message.callback(message.content) }, delay);
 		}
-	}
+	};
 
 	var remote = function() {
 
 		this.start = function(config) {
 	    	if(config) {
+	    		virtualNode = new VirtualNode();
 	    		virtualNode.configure(config);
 	    	}
     	}	
 
 		/**
 		* Returns the same message 
-		* e.g. alert("hello testbed") will return "hello testbed" from testbed
+		* e.g. alert("hello testbed") will return "hello testbed" from virtual node
 		*/
 		this.alert = function(message, callback){
 			switch(arguments.length) {
@@ -52,14 +82,13 @@ var JsMote = (function() {
 		        default: throw new Error('Illegal argument count!')
 	    	}
 
-			var function_type = CoAP.getHexString("alert");
-			var function_args = CoAP.getHexString(message);
-			var ticketId = getTicketId("alert"+message);
-			var hexTicketId = CoAP.getHexString(ticketId);
-			
-			tickets.checkIn(ticketId, callback);
+			var message = {
+				task : 1,
+				params : message,
+				callback : callback
+			};
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
+			virtualNode.request(message);
 		};
 
 		/**
@@ -76,19 +105,18 @@ var JsMote = (function() {
 		        default: throw new Error('Illegal argument count!')
 	    	}
 
-			var function_type = CoAP.getHexString("getSensorValue");
-			var function_args = CoAP.getHexString(sensor);
-			var ticketId = getTicketId("getSensorValue"+sensor);
-			var hexTicketId = CoAP.getHexString(ticketId);
-			
-			tickets.checkIn(ticketId, callback);
+			var message = {
+				task : 2,
+				params : sensor,
+				callback : callback
+			};
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);	
+			virtualNode.request(message);
 		};
 
 		/**
 		* Sends a broadcast message to all sensor nodes 
-		* in the current experiment
+		* in the current experiment (does not work in testmode)
 		*
 		* @param message {String} broadcasting message
 		* @param callback {function} optional callback function for response 
@@ -101,14 +129,13 @@ var JsMote = (function() {
 		        default: throw new Error('Illegal argument count!')
 	    	}
 
-			var function_type = CoAP.getHexString("broadcast");
-			var function_args = CoAP.getHexString(message);
-			var ticketId = getTicketId("broadcast"+message);
-			var hexTicketId = CoAP.getHexString(ticketId);
+			var message = {
+				task : 3,
+				params : message,
+				callback : callback
+			};
 
-			tickets.checkIn(ticketId, callback);
-
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
+			virtualNode.request(message);
 		};
 
 		/**
@@ -118,14 +145,30 @@ var JsMote = (function() {
 		* @param callback {function} optional callback function for response 
 		*/
 		this.switchLed  = function(state, callback){
-				
-			var message = {};
-			message.task = 0;
-			message.params = state;
-			message.callback = callback;
+			switch(arguments.length) {
+		        case 0: throw new Error("You haven't entered a state"); break;
+		        case 1: callback = this.receive;
+		        case 2: break;
+		        default: throw new Error('Illegal argument count!')
+	    	}
+			
+			var message = {
+				task : 0,
+				params : state,
+				callback : callback
+			};
 
-			this.virtualNode.request(message);
+			virtualNode.request(message);
 		};
+
+		/**
+		* Default callback function for response
+		*
+		* @param text {String, Number, bool} will be used for alert
+		*/
+		this.receive = function(text) {
+			alert(text);
+		}
 	}
     return remote;
 })();

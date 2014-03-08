@@ -31,13 +31,12 @@ app.get('/workspace', workspace.showAll);
 app.get('/project/:projectId', workspace.showProject);
 app.get('/home', home.welcome)
 app.get('/testbed/nodes', testbed.getNodes);
+app.get('/experiment/:experimentId', testbed.showExperiment);
 
 app.post('/new/project', workspace.newProject);
 app.post('/project/:projectId/save', workspace.saveProject);
 app.post('/experiment/start', testbed.reserveNodes);
 app.post('/login', login.verify);
-
-app.get('/devLogin', login.devLogin);
 
 app.listen(3000);
 console.log('Listening on port 3000');

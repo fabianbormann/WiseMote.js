@@ -35,23 +35,64 @@ exports.getNodes = function(req, res) {
 }
 
 exports.reserveNodes = function(req, res) {
-    var email = req.session.email;
+
     var nodes = JSON.parse(req.body.nodeSelection);
-    var experimentDuration = req.body.duration;
-    var experimentOffset = req.body.offset;
     var projectId = req.body.useProject;
 
-    var now = new Date(milliseconds);
-    var randomize = Math.floor((Math.random()*100)+1);
+    Project.findOne( {_id : projectId}, function(err, project) {
+        if(err) {
+        	throw err;
+        }
+        else {
+		    var startTime = req.body.startTime.split(":");
+			var endTime = req.body.endTime.split(":");
 
-    var link = md5(now+projectId+randomize);
+		    var startDate = req.body.startDate.split("-");
+			var endDate = req.body.endDate.split("-");
 
-    var experiment = new Experiment({
-    	project: projectId,
-    	duration: experimentDuration,
-    	offset: experimentOffset,
-    	nodeUrns: nodes,
-    	publicLink: link
-    });
-    
+			var from = new Date(startDate[0], startDate[1]-1, startDate[2], startTime[0], startTime[1], 0);
+			var to = new Date(endDate[0], endDate[1]-1, endDate[2], endTime[0], endTime[1], 0);
+
+			var name = req.body.experimentName;
+
+			if(!name) {
+				name = project.name;
+			}
+
+			var testbed = new wisebed.Wisebed(config.rest_api_base_url, config.websocket_base_url);
+			var credentials = { "authenticationData" : [
+				{"urnPrefix" : "urn:wisebed:uzl1:",
+				"username"  : req.session.email,
+				"password"  : req.session.password}   
+			]};
+
+			testbed.reservations.make(from, to, nodes, name, [], 
+				function() {
+					var experiment = new Experiment({
+					   	project: projectId,
+					    from: from,
+					    to: to,
+					    nodeUrns: nodes,
+					    name: name
+					});
+
+					experiment.save(function(err, new_experiment) {
+						res.redirect("/experiment/"+new_experiment._id.toString());
+					});
+				}
+			, reservationError, credentials);
+        }
+    }); 
+
+	function reservationError (jqXHR, textStatus, errorThrown) {
+		console.log(JSON.stringify(jqXHR));
+		console.log(textStatus);
+		console.log(errorThrown);
+		res.redirect("/workspace");
+	}
+
+}
+
+exports.showExperiment = function(res, req) {
+	res.render("experiment");
 }
