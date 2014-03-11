@@ -5,6 +5,16 @@ var db = mongoose.connection;
 
 var User = require('../models/User.js');
 
+exports.session = {
+  testbed: {},
+  setTestbed: function(testbed) {
+      this.testbed = testbed;
+  },
+  getTestbed: function() {
+  	return this.testbed;
+  }
+};
+
 exports.verify = function(req, res) {
 
 	var config =  {
@@ -19,7 +29,6 @@ exports.verify = function(req, res) {
 	      "password"  : req.body.password}   
 		]
 	};
-
 	testbed.login(credentials,login,redirect);
 
 	function login(status) {
@@ -39,12 +48,11 @@ exports.verify = function(req, res) {
 					});
 
 					req.session.email = req.body.email;
-					req.session.password = req.body.password;
-		        	
+					exports.session.setTestbed(testbed);	        	
 		        }
 		        else {
 		        	req.session.email = user[0].email;
-		        	req.session.password = req.body.password;
+					exports.session.setTestbed(testbed);
 		        }
 
 		        res.redirect('/home');

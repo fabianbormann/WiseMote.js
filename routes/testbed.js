@@ -1,24 +1,13 @@
 var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
 var db = mongoose.connection;
-
+var login = require('../routes/login.js');
 var Project = require('../models/Project.js');
 var Experiment = require('../models/Experiment.js');
 
-var config =  {
-	"rest_api_base_url"  : "http://portal.wisebed.itm.uni-luebeck.de/rest/v1.0",
-	"websocket_base_url" : "ws://portal.wisebed.itm.uni-luebeck.de/ws/v1.0"
-};
-
 exports.getNodes = function(req, res) {
 
-	var testbed = new wisebed.Wisebed(config.rest_api_base_url, config.websocket_base_url);
-
-	var credentials = { "authenticationData" : [
-		{"urnPrefix" : "urn:wisebed:uzl1:",
-		"username"  : req.session.email,
-		"password"  : req.session.password}   
-	]};
+	var testbed = login.session.getTestbed();
 
 	testbed.getWiseML(null,
 	function(wiseml) {
@@ -59,12 +48,13 @@ exports.reserveNodes = function(req, res) {
 				name = project.name;
 			}
 
-			var testbed = new wisebed.Wisebed(config.rest_api_base_url, config.websocket_base_url);
+			var testbed = login.session.getTestbed();
 			var credentials = { "authenticationData" : [
-				{"urnPrefix" : "urn:wisebed:uzl1:",
-				"username"  : req.session.email,
-				"password"  : req.session.password}   
-			]};
+			      {"urnPrefix" : "urn:wisebed:uzl1:",
+			      "username"  : req.body.email,
+			      "password"  : req.body.password}   
+				]
+			};
 
 			testbed.reservations.make(from, to, nodes, name, [], 
 				function() {

@@ -10,7 +10,7 @@ exports.showAll = function(req, res) {
 		res.redirect('/');
 	}
     else {
-		User.find({'email': req.session.email}, function(err, user) {
+        User.find({'email': req.session.email}, function(err, user) {
 	        if(err) {
 	        	throw err;
 	        }
