@@ -18,6 +18,10 @@ var projectSchema = mongoose.Schema({
     },
     experiments: {
     	type:String
+    }, 
+    virtualNodeInExperiment: {
+        type:Boolean,
+        default:false
     }
 });
 

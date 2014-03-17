@@ -2,6 +2,9 @@
 
 {% block head %}
 <link rel="stylesheet" href="/css/codemirror.css">
+<style type="text/css">
+    .ui.page.grid {padding: 0  3% !important; margin: 0;}
+</style>
 {% parent %}
 <script src="/js/codemirror.js"></script>
 <script src="/js/mode/css.js"></script>
@@ -12,6 +15,12 @@
 	var l = window.location;
 	var wisebedWebSocketBaseUrl = 'ws://' + l.host;
 	var wisebedBaseUrl = l.protocol + '//' + l.host;
+
+	function displayMessage(type, message) {
+		$(' #configMessage > .header').text(message);
+		$(' #configMessage ').removeClass( "error success" ).addClass( type );
+		$(' #configMessage ').show();
+	}
 
 	$( document ).ready(function() {
 		var delay;
@@ -46,9 +55,47 @@
 
         $('#nodeConfig').click(function() {
             $('.virtualNode.modal')
-            .modal('setting', 'closable', false)
+            .modal('setting', {
+            	closable :false,
+			    onHide : function(){
+			     	$(' #addGroups ').hide();
+			     	$(' #addMembers ').hide();
+			     	$(' #configMessage ').hide();
+			    },
+			    onApprove : function() {
+			     	$.post( "/update/project/{{ project._id.toString() }}/configuration", $( "#projectConfiguration" ).serialize(), function(req) {
+			     		$( 'h1' ).text('');
+			     		$( 'h1' ).append('<i class="big code icon"></i>'+req.newName);
+			     		console.log(req.option)
+			     	});
+			    }
+			 })
             .modal('show');
         });
+
+        $(' #saveButton ').click(function () {
+        	$(' #projectForm ').submit();
+        });
+
+        $(' #addMemberButton ').click(function () {
+        	$(' #addMembers ').show();
+        	$(' #addGroups ').hide();
+        });
+
+        $(' #addGroupButton ').click(function () {
+        	$(' #addGroups ').show();
+        	$(' #addMembers ').hide();
+        });
+
+        $(' #addMember ').click(function () {
+        	$.post( "/project/{{ project._id.toString() }}/add/member", { userMail : $(' #newMemberMail ').val() } , function( message ) {
+        		displayMessage(message.type, message.content);
+			});
+        });
+
+        $(' #configMessage > i ').click(function () {
+        	$(' #configMessage ').hide();
+        })
 
 		setTimeout(updatePreview, 300);
 	});
@@ -62,51 +109,98 @@
         Project configuration
     </div>
     <div class="content">
+    	<div class="ui error message" id="configMessage" style="display: none;">
+		 	<i class="remove icon"></i>
+			<div class="header"></div>
+		</div>
+    	<form id="projectConfiguration">
+		<div class="ui form">
+			<div class="field">
+				<label for="projectName">Project name</label>
+				<input type="text" id="projectName" name="projectName" value="{{ project.name }}">
+		  	</div>
+		</div>
+		<div class="ui divider"></div>
     	<table id="projectOptions">
 	    <tr>
-	    <td><label>Use virtual node in Experiment</label></td>
+	    <td><label>Use virtual node additional in real enviroment</label></td>
 	    <td><div id="useVirtualNode" class="ui toggle checkbox">
+	    	{% if project.virtualNodeInExperiment %}
 	  		<input type="checkbox" name="virtualNodeOption" id="virtualNodeOption">
 	  		<label for="virtualNodeOption">No</label>
+	  		{% else %}
+	  		<input type="checkbox" name="virtualNodeOption" id="virtualNodeOption" checked="checked">
+	  		<label for="virtualNodeOption">Yes</label>
+	  		{% endif %}
 		</div></td>
 		</tr>
 		</table>
+		</form>
 		<h2>Members</h2>
-		{{ project.members }}
+		{% for member in JSON.parse(project.members) %}
+			<p>{{ member }}</p>
+		{% endfor %}
+		<div class="ui divider"></div>
+		<div class="ui buttons">
+		<button class="ui red button" id="addMemberButton">Add members</button>
+		<div class="or"></div>
+		<button class="ui green button" id="addGroupButton">Add group</button>
+		</div>
+		<div id="addMembers" style="display: none;">
+			<div class="ui divider"></div>
+			<div class="ui form">
+				<div class="field">
+					<input type="text" id="newMemberMail" placeholder="add email from another member">
+				</div>
+			</div>
+			<button class="blue ui button" id="addMember">Add member</button>
+		</div>
+		<div id="addGroups" style="display: none;">
+			<div class="ui divider"></div>
+			<div class="ui form">
+				<div class="field">
+					<input type="text" placeholder="add group name">
+				</div>
+			</div>
+			<button class="blue ui button" id="addGroup">Add group</button>
+		</div>
     </div>
     <div class="actions">
         <div class="ui button">Cancel</div>
-        <div class="ui button">OK</div>
+        <div class="ui approve button">Save</div>
     </div>
 </div>
 <div class="sixteen wide column">
 	<h1><i class="big code icon"></i>{{ project.name }}</h1>
+</div>
+<div class="eight wide column">
 	<button id="nodeConfig" class="ui red button">
 		<i class="wrench icon"></i>
   		Configuration
 	</button>
+</div>
+<div class="eight wide column">
+	<div class="right floated ui buttons">
+		<button class="ui blue button" id="saveButton">Save</button>
+	<div class="or"></div>
+	<button class="ui green button">Start experiment</button>
+	</div>
+</div>
+<div class="sixteen wide column">
 	<div class="ui divider"></div>
 </div>
 <div class="eight wide column">
-	<form method="POST" action="/project/{{ project._id.toString() }}/save">
+	<form method="POST" action="/project/{{ project._id.toString() }}/save" id="projectForm">
 		<label>Project code:</label>
 		<div class="field">
 			<textarea id="code" name="code">{{ project.code }}</textarea>
-		</div>    
-	</div>
-	<div class="eight wide column">
-		<label>Preview:</label><br>
-		<div class="field">
-			<iframe id="preview"></iframe>
 		</div>  
-	</div>
-	<div class="sixteen wide column">
-		<div class="ui divider"></div>
-		<div class="ui buttons">
-			<button type="submit" class="ui blue button">Save</button>
-		</form>
-		<div class="or"></div>
-		<button class="ui green button">Start experiment</button>
-	</div>
+	</form>  
+</div>
+<div class="eight wide column">
+	<label>Preview:</label><br>
+	<div class="field">
+		<iframe id="preview"></iframe>
+	</div>  
 </div>
 {% endblock %}

@@ -9,6 +9,10 @@ var userSchema = mongoose.Schema({
     projects: {
     	type:String
     },
+    experiments: {
+        type:String,
+        default: JSON.stringify(new Array())
+    },
     date: { 
     	type: Date, 
     	default: Date.now 

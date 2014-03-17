@@ -39,7 +39,7 @@
 
 {% block content %}
 <div class="sixteen wide column">
-	<h1><i class="big lab icon"></i>{{ project.name }}</h1>
+	<h1><i class="big lab icon"></i>{{ experiment.name }}</h1>
 	<div class="ui divider"></div>
 </div>
 <div class="sixteen wide column">
@@ -59,7 +59,7 @@
 		<form method="POST" action="/{{ email }}/project/{{ project._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
-			<textarea id="code" name="code">{{ project.code }}</textarea>
+			<textarea id="code" name="code">{{ experiment.code }}</textarea>
 		</div>   
 		<div class="ui divider"></div>
 		<button type="submit" class="ui blue button">Save</button> 

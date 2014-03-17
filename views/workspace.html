@@ -150,11 +150,7 @@
                         <i class="asterisk icon"></i>
                     </div>
                 </div>
-            </div>
-            <div class="field">
-                <label>Members</label>
-                <input type="text" name="members" placeholder="Enter additional members">
-            </div>   
+            </div>  
             <div class="ui divider"></div>
             <button type="submit" class="ui small green submit button">Create project</button>
         </form>
@@ -174,7 +170,7 @@
             <tr class="clickable" onclick="document.location = '/project/{{ project._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ project.name }}</td>
-                <td>{{ project.members }}</td>
+                <td>{{ (JSON.parse(project.members)).join(" , ") }}</td>
                 <td>{{ project.date.toString() }}</td>
             </tr>
             {% endfor %}
@@ -302,18 +298,34 @@
             <tr>
                 <th>#</th>
                 <th>Name</th>
-                <th>State</th>
                 <th>Nodes</th>
+                <th>Start</th>
+                <th>End</th>
             </tr>
         </thead>
         <tbody>
             {% if experiments %}
             {% for experiment in experiments %}
-            <tr>
+            <tr class="clickable" onclick="document.location = '/experiment/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
-                <td>{{ experiment.nodes }}</td>
-                <td>{{ experiment.time }}</td>
+                <td>{{ experiment.nodeUrns }}</td>
+                <td>{{ experiment.from.getHours() }}:
+                    {% if experiment.from.getMinutes() > 10 %}
+                        {{ experiment.from.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.from.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.from.getMonth()+1 }}/{{ experiment.from.getDate() }}/{{ experiment.from.getFullYear() }}
+                </td>
+                <td>{{ experiment.to.getHours() }}:
+                    {% if experiment.to.getMinutes() > 10 %}
+                        {{ experiment.to.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.to.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
+                </td>
             </tr>
             {% endfor %}
             {% else %}

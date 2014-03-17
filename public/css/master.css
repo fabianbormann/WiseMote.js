@@ -13,8 +13,9 @@ tr.clickable {cursor: pointer;}
 
 #nodeTableContainer {height: 300px; overflow: scroll}
 
-#preview {width: 100%; min-height: 330px; background-color: #fff; border: none;}
-.CodeMirror.cm-s-default {min-height: 330px;}
+#preview {width: 100%; min-height: 500px; background-color: #fff; border: none; resize: both;}
+
+.CodeMirror.cm-s-default {min-height: 500px;}
 
 .ui.grid.basic.segment .column {margin: 10px 0 0 0;}
 
@@ -24,3 +25,17 @@ tr.clickable {cursor: pointer;}
 
 .ui.error.message {margin-bottom: 15px;}
 #projectOptions {width: 100%}
+
+#configMessage > .remove.icon {
+	cursor: pointer;
+	position: absolute;
+	top: 1em;
+	right: .5em;
+	opacity: .7;
+	-webkit-transition: opacity .1s linear;
+	transition: opacity .1s linear;
+}
+
+.ui.message .header {
+	font-size: 1em !important;
+}

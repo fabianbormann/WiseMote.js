@@ -3,6 +3,7 @@ var db = mongoose.connection;
 
 var Project = require('../models/Project.js');
 var User = require('../models/User.js');
+var Experiment = require('../models/Experiment.js');
 
 exports.guests = function(req, res){
 	if (!req.session.email) {
@@ -17,7 +18,11 @@ exports.dropDatabase = function (req, res) {
 		if(err) throw err;
 		Project.remove({}, function(err) { 
 			if(err) throw err;
-        	res.redirect('/');
+        	Experiment.remove({}, function(err) { 
+				if(err) throw err;
+				delete req.session.email;
+        		res.redirect('/');
+    		});
     	});
     });
-}
+} 
