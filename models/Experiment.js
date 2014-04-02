@@ -23,6 +23,9 @@ var experimentSchema = mongoose.Schema({
     },
     console: {
         type:String
+    },
+    experimentId : {
+        type:String
     }
 });
 

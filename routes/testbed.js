@@ -5,6 +5,7 @@ var login = require('../routes/login.js');
 var User = require('../models/User.js');
 var Project = require('../models/Project.js');
 var Experiment = require('../models/Experiment.js');
+var fs = require('fs');
 
 var config =  {
 	"rest_api_base_url"  : "http://portal.wisebed.itm.uni-luebeck.de/rest/v1.0",
@@ -61,13 +62,15 @@ exports.reserveNodes = function(req, res) {
             }];
 
 			testbed.reservations.make(from, to, nodes, name, [], 
-				function() {
+				function(confidentialReservationDataList, textStatus, jqXHR) {
+					
 					var experiment = new Experiment({
 					   	project: projectId,
 					    from: from,
 					    to: to,
 					    nodeUrns: nodes,
-					    name: name
+					    name: name,
+					    experimentId: confidentialReservationDataList.confidentialReservationDataList[0].serializedSecretReservationKeyBase64
 					});
 
 					experiment.save(function(err, new_experiment) {
@@ -117,10 +120,45 @@ exports.showExperiment = function(req, res) {
 						throw err;
 					}
 					else {
-						res.render("experiment", {
-							experiment : experiment,
-							project : project
-						});	
+
+						fs.readFile('./public/apps/remote_app.bin', function (err, image) {
+							if (err) { 
+								throw err;
+							}
+							else {
+
+								var data = {
+									configurations : []
+								};
+
+								data.configurations.push({
+									nodeUrns : experiment.nodeUrns.split(","),
+									image : image
+								});
+
+								testbed.experiments.flashNodes(
+									experiment.experimentId, 
+									data, 
+									function(result) {
+										console.log("MyResult : "+result);
+									},
+									function(progress) {
+										console.log("MyProgress : "+progress);
+									},
+									function(jqXHR, textStatus, errorThrown) {
+										console.log("error! :"); 
+										console.log(jqXHR);
+										console.log(textStatus);
+										console.log(errorThrown);
+									}
+								);
+
+								res.render("experiment", {
+									experiment : experiment,
+									project : project
+								});	
+							}
+						});
 					}
 				})
 			}
