@@ -111,9 +111,22 @@ exports.showExperiment = function(req, res) {
 			throw err;
 		}
 		else {
-			res.render("experiment", {
-				experiment : experiment
-			});	
+			if (experiment) {
+				Project.findOne({_id : experiment.project}, function (err, project) {
+					if(err) {
+						throw err;
+					}
+					else {
+						res.render("experiment", {
+							experiment : experiment,
+							project : project
+						});	
+					}
+				})
+			}
+			else {
+				res.redirect("/");
+			}
 		}
 	})
 }

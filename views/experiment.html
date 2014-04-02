@@ -59,7 +59,7 @@
 		<form method="POST" action="/{{ email }}/project/{{ project._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
-			<textarea id="code" name="code">{{ experiment.code }}</textarea>
+			<textarea id="code" name="code">{{ project.code }}</textarea>
 		</div>   
 		<div class="ui divider"></div>
 		<button type="submit" class="ui blue button">Save</button> 
