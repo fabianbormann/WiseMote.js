@@ -133,7 +133,7 @@ exports.showExperiment = function(req, res) {
 
 								data.configurations.push({
 									nodeUrns : experiment.nodeUrns.split(","),
-									image : image
+									image : new Buffer(image).toString('base64')
 								});
 
 								testbed.experiments.flashNodes(
@@ -153,6 +153,8 @@ exports.showExperiment = function(req, res) {
 									}
 								);
 
+								console.log(res);
+
 								res.render("experiment", {
 									experiment : experiment,
 									project : project
@@ -167,4 +169,25 @@ exports.showExperiment = function(req, res) {
 			}
 		}
 	})
+}
+
+exports.sendMessage = function(req, res) {
+	Experiment.findOne({_id : req.body.experimentId}, function (err, experiment) {
+		if(err) {
+			throw err;
+		}
+		else {
+			testbed.experiments.send(
+				experiment.experimentId, 
+				req.body.nodeUrns, 
+				req.body.message, 
+				function() {
+					alert("send");
+				}, 
+				function() {
+					alert("error");
+				}
+			);
+		}
+	});
 }
