@@ -22,19 +22,7 @@ var JsMote = (function() {
 	var delimiter = ",0x2f";
 
 	var remote = function() {
-		
-		var experimentId = "";
-		var socket;
-		var nodes;
-		var testbedId;
 		var tickets = new TicketSystem();
-		var lastMessage = "";
-
-		this.start = function() {
-			this.testbedId = "uzl";
-	    	this.getExperimentId(reservationKey);
-	    	this.callInit(this);
-    	}	
 
 		/**
 		* Returns the same message 
@@ -141,79 +129,6 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
 		};
 
-		this.callInit = function(self){
-			if(experimentId != ""){
-				self.init();
-			}
-			else{
-				setTimeout(function(){self.callInit(self);},200);
-			}
-		};
-
-		this.init = function(){
-	    	//TODO nodetextbox need a ID or a Class to get the innerHTML and node Array
-	    	//this.nodes = ["urn:wisebed:uzl1:0x200c"];
-	    	initSocket(testbedId, experimentId, this.decodeIncommingMessage, this.reconnect);
-	    };
-
-		function initSocket(testbedId, experimentId, onmessage, onclosed){
-	        this.giveFeedback = function(event){
-	    		//alert(window.event.type+ "\n" + JSON.stringify(event));
-	    	}
-
-	        this.onmessage = onmessage;
-	        this.onopen = this.giveFeedback;
-	        this.onclosed = onclosed;
-
-	        window.WebSocket = window.MozWebSocket || window.WebSocket;
-
-	        var self = this;
-
-	        this.socket = new WebSocket('ws://wisebed.itm.uni-luebeck.de' + '/ws/experiments/' + experimentId);
-	        this.socket.onmessage = function(event) {
-	            self.onmessage(JSON.parse(event.data));
-	        };
-	        this.socket.onopen = function(event) {
-	            self.onopen(event);
-	        };
-	        this.socket.onclose = function(event) {
-	            self.onclosed(event);
-	        };
-
-	        this.send = function(message) {
-	            this.socket.send(JSON.stringify(message, null, '  '));
-	        };
-
-	        this.close = function(code, reason) {
-	            this.socket.close(code !== undefined ? code : 1000, reason !== undefined ? reason : '');
-	        };
-	    };
-
-	    this.getExperimentId = function(reservationKey){
-				var secretReservationKeys = {reservations : [] };
-				var splittedKey = reservationKey.split(",");
-
-				secretReservationKeys.reservations[0] = {
-						urnPrefix : splittedKey[0],
-						secretReservationKey : splittedKey[1]
-				};
-
-				$.ajax({
-					url         : wisebedBaseUrl + "/rest/2.3/" + this.testbedId + "/experiments",
-					type        : "POST",
-					data        : JSON.stringify(secretReservationKeys, null, '  '),
-					contentType : "application/json; charset=utf-8",
-					success     : setExperimentId,
-					error       : console.log,
-					xhrFields   : { withCredentials: true }
-				});
-	    };
-
-	    function setExperimentId(data, textStatus, jqXHR){
-	    	var experimentUrl = jqXHR.responseText;
-	    	experimentId = experimentUrl.substr(experimentUrl.lastIndexOf('/') + 1);
-	    };
-
 	    this.decodeIncommingMessage = function(event){
 	    	var message = base64_decode(event.payloadBase64);
 		    	if(message.length > 33){
@@ -248,21 +163,20 @@ var JsMote = (function() {
 		};
 
 		function sendMessage(message){
-			
 			prefix = "0x0A";
 			suffix = ",0x00";
 
 			message = prefix+message+suffix; 
 
 			var messageBytes = remote.parseByteArrayFromString(message);
-			
-			base64_message = base64_encode(messageBytes);
+				base64_message = base64_encode(messageBytes);
 
-			this.socket.send(JSON.stringify({
-	                    type: 'upstream',
-	                    targetNodeUrn: targetNode,
-	                    payloadBase64: base64_message
-	        }));
+	        $.post('/nodes/message/send',{
+	        	message : base64_message,
+	        	target : targetNode
+	        }, function(response) {
+	        	console.log(response);
+	        });
 		};
 
 	};

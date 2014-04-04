@@ -131,9 +131,11 @@ exports.showExperiment = function(req, res) {
 									configurations : []
 								};
 
+								var appImage = new Buffer(image).toString('base64');
+
 								data.configurations.push({
 									nodeUrns : experiment.nodeUrns.split(","),
-									image : new Buffer(image).toString('base64')
+									image : "data:application/macbinary;base64,"+appImage
 								});
 
 								testbed.experiments.flashNodes(
@@ -152,8 +154,6 @@ exports.showExperiment = function(req, res) {
 										console.log(errorThrown);
 									}
 								);
-
-								console.log(res);
 
 								res.render("experiment", {
 									experiment : experiment,
