@@ -1,4 +1,5 @@
-var express = require('express'),
+var express = require('express.io'),
+
 	swig = require('swig'),
 	connect = require('connect'),
 
@@ -24,6 +25,19 @@ app.configure(function () {
 app.set('view cache', false);
 swig.setDefaults({cache: false});
 
+app.http().io();
+
+app.io.route('ready', function(req) {
+	console.log(req);
+    //req.io.emit('talk', {
+       // message: 'io event from an io route on the server'
+    //});
+});
+
+app.get('/test', function(req, res) {
+    req.io.route('ready');
+});
+
 app.get('/', index.guests);
 app.get('/dropDatabase', index.dropDatabase);
 app.get('/logout', login.logout);
@@ -41,6 +55,10 @@ app.post('/experiment/start', testbed.reserveNodes);
 app.post('/login', login.verify);
 app.post('/update/project/:projectId/configuration', workspace.saveProjectConfiguration);
 app.post('/project/:projectId/add/member', workspace.addProjectMember);
+
+app.post('/nodes/message/send/:experimentId', testbed.sendMessage);
+app.post('/experiment/start/listen/:experimentId', testbed.listenExperiment);
+app.post('/experiment/close/connection', testbed.closeConnection)
 
 /***
 Use only in edit mode.

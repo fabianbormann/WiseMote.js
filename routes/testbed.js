@@ -70,11 +70,34 @@ exports.reserveNodes = function(req, res) {
 					    to: to,
 					    nodeUrns: nodes,
 					    name: name,
-					    experimentId: confidentialReservationDataList.confidentialReservationDataList[0].serializedSecretReservationKeyBase64
+					    experimentId: confidentialReservationDataList.confidentialReservationDataList[0].serializedSecretReservationKeyBase64,
+					    code: ""
 					});
 
+					var experimentCode = project.code;
+
+					var leftSpiltIndex = experimentCode.indexOf("<!-- Configuration: Please do not remove -->");
+					var rightSpiltIndex = experimentCode.indexOf("<!-- End of Configuration -->");
+					var preConfigCode = experimentCode.substr(0,leftSpiltIndex);
+					var experimentConfig = '<!-- Configuration: Please do not remove -->\n' +
+					'<script src="/js/jquery-1.9.1.js"></script>\n' +
+					'<script src="/js/jquery.md5.js"></script>\n' +
+					'<script src="/js/base64_encode.js"></script>\n' +
+					'<script src="/js/base64_decode.js"></script>\n' +
+					'<script src="/js/CoAP.js"></script>\n' +
+					'<script src="/js/ticketsystem.js"></script>\n' +
+					'<script src="/js/wisebed-remote.js"></script>\n' +
+					'<script type="text/javascript">\n' +
+				    '  jsMote = new JsMote();\n' +
+				    '  jsMote.start("'+experiment._id.toString()+'");\n' +
+				  	'</script>\n';
+				  	var postConfigCode = experimentCode.substr(rightSpiltIndex);
+				  	
+				  	experimentCode = preConfigCode+experimentConfig+postConfigCode;
+				  	experiment.code = experimentCode;
+
 					experiment.save(function(err, new_experiment) {
-						User.findOne({email : req.session.email}, function (err, user) {
+			  			User.findOne({email : req.session.email}, function (err, user) {
 							if(err) { 
 								throw err;
 							}
@@ -84,15 +107,19 @@ exports.reserveNodes = function(req, res) {
 								user.update({
 									experiments : JSON.stringify(userExperiments)
 								}, function (err, updatedUser) {
+									var now = new Date();
 									if(err) {
 										throw err;
 									}
-									else {
+									else if (from >= now && now < to) {
 										res.redirect("/experiment/"+new_experiment._id.toString());
+									}
+									else {
+										res.redirect("/workspace");
 									}
 								});
 							}
-						})
+					  	});
 					});
 				}
 			, reservationError, credentials);
@@ -115,79 +142,118 @@ exports.showExperiment = function(req, res) {
 		}
 		else {
 			if (experiment) {
-				Project.findOne({_id : experiment.project}, function (err, project) {
-					if(err) {
-						throw err;
-					}
-					else {
+				if(!experiment.flashed) {
+					fs.readFile('./public/apps/remote_app.bin', function (err, image) {
+						if (err) { 
+							throw err;
+						}
+						else {
 
-						fs.readFile('./public/apps/remote_app.bin', function (err, image) {
-							if (err) { 
-								throw err;
-							}
-							else {
+							var data = {
+								configurations : []
+							};
 
-								var data = {
-									configurations : []
-								};
+							var appImage = new Buffer(image).toString('base64');
 
-								var appImage = new Buffer(image).toString('base64');
+							data.configurations.push({
+								nodeUrns : experiment.nodeUrns.split(","),
+								image : "data:application/macbinary;base64,"+appImage
+							});
 
-								data.configurations.push({
-									nodeUrns : experiment.nodeUrns.split(","),
-									image : "data:application/macbinary;base64,"+appImage
-								});
+							testbed.experiments.flashNodes(
+								experiment.experimentId, 
+								data, 
+								function(result) {
+									console.log("MyResult : "+result);
+								},
+								function(progress) {
+									console.log("MyProgress : "+progress);
+								},
+								function(jqXHR, textStatus, errorThrown) {
+									console.log("error! :"); 
+									console.log(jqXHR);
+									console.log(textStatus);
+									console.log(errorThrown);
+								}
+							);
 
-								testbed.experiments.flashNodes(
-									experiment.experimentId, 
-									data, 
-									function(result) {
-										console.log("MyResult : "+result);
-									},
-									function(progress) {
-										console.log("MyProgress : "+progress);
-									},
-									function(jqXHR, textStatus, errorThrown) {
-										console.log("error! :"); 
-										console.log(jqXHR);
-										console.log(textStatus);
-										console.log(errorThrown);
-									}
-								);
+							experiment.update({ $set: { flashed: true }}).exec();
 
-								res.render("experiment", {
-									experiment : experiment,
-									project : project
-								});	
-							}
-						});
-					}
-				})
+							res.render("experiment", {
+								experiment : experiment
+							});	
+						}
+					});
+				}
+				else {
+					res.render("experiment", {
+						experiment : experiment
+					});	
+				}
 			}
 			else {
 				res.redirect("/");
 			}
 		}
-	})
+	});
 }
 
 exports.sendMessage = function(req, res) {
-	Experiment.findOne({_id : req.body.experimentId}, function (err, experiment) {
+	Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
 		if(err) {
 			throw err;
 		}
 		else {
 			testbed.experiments.send(
 				experiment.experimentId, 
-				req.body.nodeUrns, 
+				experiment.nodeUrns.split(","), 
 				req.body.message, 
-				function() {
-					alert("send");
+				function(result) {
+					console.log(result);
+					res.send(result);
 				}, 
-				function() {
-					alert("error");
+				function(jqXHR, textStatus, errorThrown) {
+					console.log(jqXHR);
+					console.log(textStatus);
+					console.log(errorThrown);
+					res.send(textStatus);
 				}
 			);
+		}
+	});
+}
+
+var testbedSocket = null;
+
+exports.closeConnection = function(req, res) {
+	if(testbedSocket != null) {
+		testbedSocket.close(1000, 'The purpose for which the connection was established has been fulfilled.');
+		res.send("Close Socket");
+	}
+	else {
+		res.send("No running WebSocket!");
+	}
+}
+
+exports.listenExperiment = function(req, res) {
+	Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
+		if(err) {
+			throw err;
+		}
+		else {
+			var onOpen = function(event)  {
+				console.log(event);
+			}
+
+			var onMessage = function(event) {
+				console.log(event);
+			}
+
+			var onClosed = function(event) {
+				console.log(event);
+			}
+
+			testbedSocket = new testbed.WebSocket(experiment.experimentId, onMessage, onOpen, onClosed);
 		}
 	});
 }

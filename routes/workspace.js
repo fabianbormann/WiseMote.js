@@ -26,10 +26,31 @@ exports.getPage = function(req, res) {
                             if(err) {
                                 throw err;
                             }
-                            else {                        
+                            else {    
+
+                                futureExperiments = [];
+                                runningExperiments = [];
+                                pastExperiments = [];
+
+                                for(var i = 0; i < experiments.length; i++) {
+                                    var currentDate = new Date();
+                                    
+                                    if(experiments[i].to < currentDate) {
+                                        pastExperiments.push(experiments[i]);
+                                    }
+                                    else if (experiments[i].from > currentDate) {
+                                        futureExperiments.push(experiments[i]);
+                                    }
+                                    else {
+                                        runningExperiments.push(experiments[i]);
+                                    }
+                                }
+
                                 res.render('workspace', {
                                     projects : projects,
-                                    experiments : experiments
+                                    futureExperiments : futureExperiments,
+                                    runningExperiments : runningExperiments,
+                                    pastExperiments : pastExperiments
                                 });
                             }
                         });

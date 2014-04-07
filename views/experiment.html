@@ -9,21 +9,30 @@
 <script src="/js/mode/javascript.js"></script>
 <script src="/js/mode/htmlmixed.js"></script>
 <script type="text/javascript">
-	var l = window.location;
-	var wisebedWebSocketBaseUrl = 'ws://' + l.host;
-	var wisebedBaseUrl = l.protocol + '//' + l.host;
-
 	$( document ).ready(function() {
 		var delay;
 		var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
 			mode: 'text/html',
 			tabMode: 'indent'
 		});
+
 		editor.on("change", function() {
 			clearTimeout(delay);
 			delay = setTimeout(updatePreview, 300);
 		});
 
+		window.onbeforeunload = function(e) {
+			$.ajax({
+			  type: 'POST',
+			  url: '/experiment/close/connection',
+			  success: function (message) {
+			  	console.log(message);
+			  	return
+			  },
+			  async:false
+			});
+		};
+	
 		function updatePreview() {
 			var previewFrame = document.getElementById("preview");
 			var preview = previewFrame.contentDocument || previewFrame.contentWindow.document;
@@ -33,6 +42,8 @@
 		}
 
 		setTimeout(updatePreview, 300);
+
+		$.post('/experiment/start/listen/{{ experiment._id.toString() }}');
 	});
 </script>
 {% endblock %}
@@ -56,10 +67,10 @@
 		</a>
 	</div>
 	<div class="ui bottom attached segment">
-		<form method="POST" action="/{{ email }}/project/{{ project._id.toString() }}/save">
+		<form method="POST" action="/{{ email }}/experiment/{{ experiment._id.toString() }}/save">
 		<label>Project code:</label>
 		<div class="field">
-			<textarea id="code" name="code">{{ project.code }}</textarea>
+			<textarea id="code" name="code">{{ experiment.code }}</textarea>
 		</div>   
 		<div class="ui divider"></div>
 		<button type="submit" class="ui blue button">Save</button> 

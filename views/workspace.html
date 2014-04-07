@@ -165,7 +165,7 @@
             </tr>
         </thead>
         <tbody>
-            {% if projects %}
+            {% if projects.length > 0 %}
             {% for project in projects %}
             <tr class="clickable" onclick="document.location = '/project/{{ project._id.toString() }}';">
                 <td>{{ loop.index }}</td>
@@ -307,8 +307,8 @@
             </tr>
         </thead>
         <tbody>
-            {% if experiments %}
-            {% for experiment in experiments %}
+            {% if runningExperiments.length > 0 %}
+            {% for experiment in runningExperiments %}
             <tr class="clickable" onclick="document.location = '/experiment/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
@@ -333,7 +333,7 @@
             {% endfor %}
             {% else %}
             <tr class="warning">
-                <td colspan="4">There are no runing experiments.</td>
+                <td colspan="5">There are no runing experiments.</td>
             </tr>
             {% endif %}
         </tbody>

@@ -26,6 +26,13 @@ var experimentSchema = mongoose.Schema({
     },
     experimentId : {
         type:String
+    },
+    flashed : {
+        type:Boolean,
+        default: false
+    },
+    code : {
+        type:String
     }
 });
 

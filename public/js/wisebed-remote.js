@@ -22,13 +22,19 @@ var JsMote = (function() {
 	var delimiter = ",0x2f";
 
 	var remote = function() {
+
 		var tickets = new TicketSystem();
+		var experimentId;
+
+		this.start = function(experiment_id) {
+			experimentId = experiment_id;
+		}
 
 		/**
 		* Returns the same message 
 		* e.g. alert("hello testbed") will return "hello testbed" from testbed
 		*/
-		this.alert = function(message, callback){
+		this.alert = function(message, callback) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered any message"); break;
 		        case 1: callback = this.receive;
@@ -52,7 +58,7 @@ var JsMote = (function() {
 		* @param sensor {String} light, temperature
 		* @param callback {function} optional callback function for response 
 		*/
-		this.getSensorValue  = function(sensor, callback){
+		this.getSensorValue  = function(sensor, callback) {
 			switch(arguments.length) {
 		        case 0: throw new Error("Enter a sensor name like light or temperature!"); break;
 		        case 1: callback = this.receive;
@@ -77,7 +83,7 @@ var JsMote = (function() {
 		* @param message {String} broadcasting message
 		* @param callback {function} optional callback function for response 
 		*/
-		this.broadcast = function(message, callback){
+		this.broadcast = function(message, callback) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered any message"); break;
 		        case 1: callback = this.receive;
@@ -101,7 +107,7 @@ var JsMote = (function() {
 		* @param state {String, bool} on,off,0,1
 		* @param callback {function} optional callback function for response 
 		*/
-		this.switchLed  = function(state, callback){
+		this.switchLed  = function(state, callback) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered the new led state (on/off)"); break;
 		        case 1: callback = this.receive;
@@ -129,7 +135,7 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
 		};
 
-	    this.decodeIncommingMessage = function(event){
+	    this.decodeIncommingMessage = function(event) {
 	    	var message = base64_decode(event.payloadBase64);
 		    	if(message.length > 33){
 			    	var id = message.substr(1,32);
@@ -147,22 +153,18 @@ var JsMote = (function() {
 		    	}
 	    };
 
-		this.receive = function(message){
+		this.receive = function(message) {
 			alert(message);
 		};
 
-	    this.reconnect = function(event){
-	    	initSocket(this.testbedId, this.experimentId, this.decodeIncommingMessage, function(){this.reconnect();});
-	    };
-
-		function getTicketId(functionElements){
+		function getTicketId(functionElements) {
 			var time = Date.prototype.getTime();
 			var rand = Math.floor(Math.random() * 1000) + 1;
 			var ticketId = $.md5($.md5(functionElements)+$.md5(time)+$.md5(rand));
 			return ticketId;
 		};
 
-		function sendMessage(message){
+		function sendMessage(message) {
 			prefix = "0x0A";
 			suffix = ",0x00";
 
@@ -171,12 +173,13 @@ var JsMote = (function() {
 			var messageBytes = remote.parseByteArrayFromString(message);
 				base64_message = base64_encode(messageBytes);
 
-	        $.post('/nodes/message/send',{
-	        	message : base64_message,
-	        	target : targetNode
-	        }, function(response) {
-	        	console.log(response);
-	        });
+	        $.post('/nodes/message/send/'+experimentId,{
+	        		message : base64_message
+	        	}, 
+	        	function(response) {
+	        		console.log(response);
+	        	}
+	        );
 		};
 
 	};
