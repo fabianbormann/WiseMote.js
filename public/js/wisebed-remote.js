@@ -21,6 +21,25 @@ var JsMote = (function() {
 
 	var delimiter = ",0x2f";
 
+	/**
+	* Use socket.io for wisebed server communication
+	*/
+
+	io = io.connect()
+
+	io.on('test', function(data) {
+	    console.log(JSON.stringify(data));
+	
+		/*
+		example return 
+			
+		{"message":{"type":"upstream","payloadBase64":"aTM0ZThhYTY5NWU2MTNjZjFmZTQzNGU0Nzg2NmFkNDU1aGk=",
+		"sourceNodeUrn":"urn:wisebed:uzl1:0x2000","timestamp":"2014-04-08T19:56:12.922+02:00"}}
+		
+		*/
+
+	}) 
+
 	var remote = function() {
 
 		var tickets = new TicketSystem();
@@ -173,13 +192,7 @@ var JsMote = (function() {
 			var messageBytes = remote.parseByteArrayFromString(message);
 				base64_message = base64_encode(messageBytes);
 
-	        $.post('/nodes/message/send/'+experimentId,{
-	        		message : base64_message
-	        	}, 
-	        	function(response) {
-	        		console.log(response);
-	        	}
-	        );
+	        $.post('/nodes/message/send/'+experimentId, { message : base64_message });
 		};
 
 	};

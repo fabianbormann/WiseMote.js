@@ -1,15 +1,16 @@
-var express = require('express.io'),
+var express = require('express.io');
+var app = express();
 
-	swig = require('swig'),
+app.http().io()
+
+var	swig = require('swig'),
 	connect = require('connect'),
 
 	index = require('./routes/index.js'),
 	home = require('./routes/home.js'),
 	login = require('./routes/login.js'),
 	workspace = require('./routes/workspace.js'),
-	testbed = require('./routes/testbed.js');
-
-var app = express();
+	testbed = require('./routes/testbed.js')(app.io);
 
 app.configure(function () {
 	app.engine('html', swig.renderFile);
@@ -25,18 +26,11 @@ app.configure(function () {
 app.set('view cache', false);
 swig.setDefaults({cache: false});
 
-app.http().io();
-
 app.io.route('ready', function(req) {
-	console.log(req);
-    //req.io.emit('talk', {
-       // message: 'io event from an io route on the server'
-    //});
-});
-
-app.get('/test', function(req, res) {
-    req.io.route('ready');
-});
+    req.io.emit('talk', {
+        message: 'io event from an io route on the server'
+    })
+})
 
 app.get('/', index.guests);
 app.get('/dropDatabase', index.dropDatabase);
