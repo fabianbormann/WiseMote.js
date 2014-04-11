@@ -26,10 +26,8 @@ app.configure(function () {
 app.set('view cache', false);
 swig.setDefaults({cache: false});
 
-app.io.route('ready', function(req) {
-    req.io.emit('talk', {
-        message: 'io event from an io route on the server'
-    })
+app.io.route('listen', function(req) {
+    testbed.listenExperiment(req.data.experimentId);
 })
 
 app.get('/', index.guests);
@@ -42,6 +40,7 @@ app.get('/testbed/nodes', testbed.getNodes);
 app.get('/experiment/:experimentId', testbed.showExperiment);
 app.get('/show/example/:exampleId', workspace.showExample);
 app.get('/example/:exampleId/clone', workspace.cloneExample);
+app.get('/list/examples', home.getExamples);
 
 app.post('/new/project', workspace.newProject);
 app.post('/project/:projectId/save', workspace.saveProject);
@@ -49,10 +48,8 @@ app.post('/experiment/start', testbed.reserveNodes);
 app.post('/login', login.verify);
 app.post('/update/project/:projectId/configuration', workspace.saveProjectConfiguration);
 app.post('/project/:projectId/add/member', workspace.addProjectMember);
-
+app.post('/experiment/:experimentId/save', testbed.saveExperiment);
 app.post('/nodes/message/send/:experimentId', testbed.sendMessage);
-app.post('/experiment/start/listen/:experimentId', testbed.listenExperiment);
-app.post('/experiment/close/connection', testbed.closeConnection)
 
 /***
 Use only in edit mode.

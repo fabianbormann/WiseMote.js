@@ -20,6 +20,7 @@
 var JsMote = (function() {
 
 	var delimiter = ",0x2f";
+	var tickets = new TicketSystem();
 
 	/**
 	* Use socket.io for wisebed server communication
@@ -27,22 +28,16 @@ var JsMote = (function() {
 
 	io = io.connect()
 
-	io.on('test', function(data) {
-	    console.log(JSON.stringify(data));
-	
-		/*
-		example return 
-			
-		{"message":{"type":"upstream","payloadBase64":"aTM0ZThhYTY5NWU2MTNjZjFmZTQzNGU0Nzg2NmFkNDU1aGk=",
-		"sourceNodeUrn":"urn:wisebed:uzl1:0x2000","timestamp":"2014-04-08T19:56:12.922+02:00"}}
+	io.on('incommingMessage', function(data) {
+    	var callback = tickets.get(data.message.ticket);
 		
-		*/
-
-	}) 
+		if(typeof callback == 'function'){
+    		callback(data.message.ascii);
+		}    	
+	});
 
 	var remote = function() {
 
-		var tickets = new TicketSystem();
 		var experimentId;
 
 		this.start = function(experiment_id) {
@@ -154,24 +149,6 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
 		};
 
-	    this.decodeIncommingMessage = function(event) {
-	    	var message = base64_decode(event.payloadBase64);
-		    	if(message.length > 33){
-			    	var id = message.substr(1,32);
-			    	var payload = message.substr(33);
-
-			    	var callback = tickets.get(id);
-					
-			    	if(!(payload == lastMessage)){
-			    		lastMessage = payload;
-
-			    		if(typeof callback == 'function'){
-		            		callback(payload);
-		        		}
-			    	}
-		    	}
-	    };
-
 		this.receive = function(message) {
 			alert(message);
 		};
@@ -180,6 +157,7 @@ var JsMote = (function() {
 			var time = Date.prototype.getTime();
 			var rand = Math.floor(Math.random() * 1000) + 1;
 			var ticketId = $.md5($.md5(functionElements)+$.md5(time)+$.md5(rand));
+
 			return ticketId;
 		};
 

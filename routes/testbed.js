@@ -202,6 +202,19 @@ module.exports = function(io) {
 		});
 	}
 
+	routes.saveExperiment = function(req, res) {
+		Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
+			if(err) {
+				throw err;
+			}
+			else {
+				experiment.update({ code: req.body.code }, function() {
+					res.redirect('/experiment/'+req.params.experimentId);
+				});
+			}
+		});
+	}
+
 	routes.sendMessage = function(req, res) {
 		Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
 			if(err) {
@@ -228,22 +241,29 @@ module.exports = function(io) {
 
 	var testbedSocket = null;
 
-	routes.closeConnection = function(req, res) {
+	function closeConnection() {
 		if(testbedSocket != null) {
 			testbedSocket.close(1000, 'The purpose for which the connection was established has been fulfilled.');
-			res.send("Close Socket");
+			console.log("Close Socket");
 		}
 		else {
-			res.send("No running WebSocket!");
+			console.log("No running WebSocket!");
 		}
 	}
 
 	function onMessage(event) {
-		io.broadcast('test', {message : event});
+		if(event.type == "upstream") {
+			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
+			event.ticket = event.ascii.substr(1,32);
+			event.ascii = event.ascii.substr(33);
+			io.broadcast('incommingMessage', {message : event});
+		}
 	}
 
-	routes.listenExperiment = function(req, res) {
-		Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
+	routes.listenExperiment = function(experimentId) {
+		closeConnection();
+
+		Experiment.findOne({_id : experimentId}, function (err, experiment) {
 			if(err) {
 				throw err;
 			}

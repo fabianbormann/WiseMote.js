@@ -21,6 +21,14 @@
 			<script type="text/javascript">
 			    $( document ).ready(function() {
 			        $('.ui.dropdown.item').dropdown();
+
+			        $.get('/list/examples', function(examples) {
+			        	$.each(examples, function(index, example) {
+			        		$('#examples').append('<a class="item" href="/show/example/'+
+			        			example._id.toString()+'">'+example.name+'</a>');
+			        	});
+			        });
+
 			    });
 			</script>
 			<div class="ui fixed transparent inverted main menu">
@@ -38,17 +46,10 @@
 			        <a href="/workspace" class="item">
 			            <i class="wrench icon"></i>Workspace
 			        </a>
-			        {% if examples.length > 0 %}
 			        <div class="ui dropdown item">
 			          <i class="magic icon"></i> Examples <i class="dropdown icon"></i>
-			            <div class="menu">
-			                {% for example in examples %}
-			                <a class="item" href="/show/example/{{ example._id.toString() }}">Basics</a>
-			                {% endfor %}
-			            </div>
+			            <div class="menu" id="examples"></div>
 			        </div>
-			        {% endif %}
-
 			        <a class="right floated item" href="/logout"><i class="sign out icon"></i>Logout</a>
 			    </div>
 			</div>

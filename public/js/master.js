@@ -1,9 +1,9 @@
 function showExperimentForm () {
-    $("#newExperimentButton").hide();
-    $("#newExperimentForm").show();
+    $( "#newExperimentButton" ).hide();
+    $( "#newExperimentForm" ).show();
 }
 
 function showProjectForm () {
-    $("#newProjectButton").hide();
-    $("#newProjectForm").show();
+    $( "#newProjectButton" ).hide();
+    $( "#newProjectForm" ).show();
 }

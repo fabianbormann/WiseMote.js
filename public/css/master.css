@@ -21,6 +21,8 @@ tr.clickable {cursor: pointer;}
 
 .ui.node.label {margin: 0.25em !important;}
 
+.ui.slider.checkbox {margin-bottom: 15px;}
+
 #footer {margin-top: 60px}
 
 .ui.error.message {margin-bottom: 15px;}
@@ -38,4 +40,23 @@ tr.clickable {cursor: pointer;}
 
 .ui.message .header {
 	font-size: 1em !important;
+}
+
+#console {
+	margin: 5px 5px;
+	padding: 10px;
+	min-height: 150px;
+	max-height: 300px;
+	overflow-y: scroll;
+	background-color: black;
+}
+
+#console > p {
+	color: white;
+	margin: 0;
+	padding: 0;
+}
+
+#console > p > i {
+	color: #00ee44;
 }

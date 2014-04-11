@@ -51,6 +51,31 @@
             .modal()
         ;
 
+        $('.ui.slider.checkbox').checkbox();
+
+        $('#pastExperiments').hide();
+        $('#fultureExperiments').hide();
+
+        $('#showFultureExperiments').change(function() {
+           if($(this).is(":checked")) {
+                $('#fultureExperiments').hide();
+                $('#fultureExperimentsOption > label').text("Show fulture experiments");
+                return;
+           }
+           $('#fultureExperiments').show();
+           $('#fultureExperimentsOption > label').text("Hide fulture experiments");
+        });
+
+        $('#showPastExperiments').change(function() {
+           if($(this).is(":checked")) {
+                $('#pastExperiments').hide();
+                $('#pastExperimentsOption > label').text("Show past experiments");
+                return;
+           }
+           $('#pastExperiments').show();
+           $('#pastExperimentsOption > label').text("Hide past experiments");
+        });
+
         $('#selectNodes').click(function() {
             $('.nodes.modal')
             .modal('setting', 'closable', false)
@@ -119,7 +144,7 @@
 
                 $('#nodeTable > tbody:last').append('<tr><td>'+index+'</td><td>'+node.id+'</td><td>'+node.nodeType+'</td><td>'+nodeSensors+'</td><td><div class="ui large checkbox"><input type="checkbox" id="0'+node.hexId+'" name="'+node.id+'"><label></label></div></td></tr>');
                 
-                $('.ui.checkbox')
+                $('.ui.large.checkbox')
                     .checkbox({
                         onEnable: function() {
                             refreshSelectedNodes(this[0].name, true);
@@ -192,6 +217,7 @@
     <div class="ui divider"></div>
     <p class="infoline">Visit currently running experiments or start a new one.</p>
     <a class="ui small green submit button" id="newExperimentButton" onclick="showExperimentForm();">Start a new experiment</a>
+        
     <div id="newExperimentForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/experiment/start" method="POST">
             <input type="hidden" name="nodeSelection" id="nodeSelection">
@@ -296,6 +322,48 @@
             <button type="submit" class="ui small green labeled icon submit button"><i class="play icon"></i>Start reservation</button>
         </form>
     </div>
+
+    {% if futureExperiments.length > 0 %}
+    <table class="ui table segment" id="fultureExperiments">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Nodes</th>
+                <th>Start</th>
+                <th>End</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for experiment in futureExperiments %}
+            <tr class="positive">
+                <td>{{ loop.index }}</td>
+                <td>{{ experiment.name }}</td>
+                <td>{{ experiment.nodeUrns }}</td>
+                <td>{{ experiment.from.getHours() }}:
+                    {% if experiment.from.getMinutes() > 10 %}
+                        {{ experiment.from.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.from.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.from.getMonth()+1 }}/{{ experiment.from.getDate() }}/{{ experiment.from.getFullYear() }}
+                </td>
+                <td>{{ experiment.to.getHours() }}:
+                    {% if experiment.to.getMinutes() > 10 %}
+                        {{ experiment.to.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.to.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
+                </td>
+            </tr>
+            {% endfor %}            
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+    {% endif %}
+
     <table class="ui table segment">
         <thead>
             <tr>
@@ -340,5 +408,57 @@
         <tfoot>
         </tfoot>
     </table>
+
+    {% if pastExperiments.length > 0 %}
+    <table class="ui table segment" id="pastExperiments">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Nodes</th>
+                <th>Start</th>
+                <th>End</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for experiment in pastExperiments %}
+            <tr class="warning">
+                <td>{{ loop.index }}</td>
+                <td>{{ experiment.name }}</td>
+                <td>{{ experiment.nodeUrns }}</td>
+                <td>{{ experiment.from.getHours() }}:
+                    {% if experiment.from.getMinutes() > 10 %}
+                        {{ experiment.from.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.from.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.from.getMonth()+1 }}/{{ experiment.from.getDate() }}/{{ experiment.from.getFullYear() }}
+                </td>
+                <td>{{ experiment.to.getHours() }}:
+                    {% if experiment.to.getMinutes() > 10 %}
+                        {{ experiment.to.getMinutes() }}
+                    {% else %}
+                        0{{ experiment.to.getMinutes() }}
+                    {% endif %}  
+                    {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
+                </td>
+            </tr>
+            {% endfor %}            
+        </tbody>
+        <tfoot>
+        </tfoot>
+    </table>
+    {% endif %}  
+    <div class="ui divider"></div>  
+    <div class="ui slider checkbox" id="fultureExperimentsOption">
+        <input type="checkbox" id="showFultureExperiments" name="showFultureExperiments">
+        <label for="showFultureExperiments">Show fulture experiments</label>
+    </div>
+    <br>
+    <div class="ui slider checkbox" id="pastExperimentsOption">
+        <input type="checkbox" id="showPastExperiments" name="showPastExperiments">
+        <label for="showPastExperiments">Show past experiments</label>
+    </div>
+    
 </div>
 {% endblock %}

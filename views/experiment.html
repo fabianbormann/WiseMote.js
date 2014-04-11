@@ -3,6 +3,7 @@
 {% block head %}
 <link rel="stylesheet" href="/css/codemirror.css">
 {% parent %}
+<script src="/socket.io/socket.io.js"></script>
 <script src="/js/codemirror.js"></script>
 <script src="/js/mode/css.js"></script>
 <script src="/js/mode/xml.js"></script>
@@ -11,6 +12,10 @@
 <script type="text/javascript">
 	$( document ).ready(function() {
 		var delay;
+
+		$("#settings").show();
+		$("#console").hide();
+
 		var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
 			mode: 'text/html',
 			tabMode: 'indent'
@@ -21,17 +26,13 @@
 			delay = setTimeout(updatePreview, 300);
 		});
 
-		window.onbeforeunload = function(e) {
-			$.ajax({
-			  type: 'POST',
-			  url: '/experiment/close/connection',
-			  success: function (message) {
-			  	console.log(message);
-			  	return
-			  },
-			  async:false
-			});
-		};
+		io = io.connect()
+
+		io.emit('listen', {experimentId : "{{ experiment._id.toString() }}" });
+
+		io.on('incommingMessage', function(data) {
+		    $( "#console" ).append("<p><i>"+data.message.sourceNodeUrn+":</i> "+data.message.ascii+"</p>");
+		}); 
 	
 		function updatePreview() {
 			var previewFrame = document.getElementById("preview");
@@ -43,7 +44,22 @@
 
 		setTimeout(updatePreview, 300);
 
-		$.post('/experiment/start/listen/{{ experiment._id.toString() }}');
+		$(".ui.top.attached.tabular.menu > a").click(function() {
+			var items = $(".ui.top.attached.tabular.menu > a");
+			if(!$( this ).hasClass( "active" )) {
+				items.removeClass( "active" );
+				$( this ).addClass( "active" );
+
+				if($( this ).hasClass("projectSettings")) {
+					$("#settings").show();
+					$("#console").hide();
+				}
+				else if($( this ).hasClass("projectConsole")){
+					$("#console").show();
+					$("#settings").hide();
+				}
+			}
+		});
 	});
 </script>
 {% endblock %}
@@ -59,21 +75,26 @@
 </div>
 <div class="sixteen wide column">
 	<div class="ui top attached tabular menu">
-		<a class="active item">
+		<a class="projectSettings active item">
 			Project settings
 		</a>
-		<a class="item">
-			Community
+		<a class="projectConsole item">
+			Console
 		</a>
 	</div>
 	<div class="ui bottom attached segment">
-		<form method="POST" action="/{{ email }}/experiment/{{ experiment._id.toString() }}/save">
-		<label>Project code:</label>
-		<div class="field">
-			<textarea id="code" name="code">{{ experiment.code }}</textarea>
-		</div>   
-		<div class="ui divider"></div>
-		<button type="submit" class="ui blue button">Save</button> 
+		<div id="settings">
+			<form method="POST" action="/experiment/{{ experiment._id.toString() }}/save">
+				<label>Project code:</label>
+				<div class="field">
+					<textarea id="code" name="code">{{ experiment.code }}</textarea>
+				</div>   
+				<div class="ui divider"></div>
+				<input type="submit" class="ui blue button" value="Save"> 
+			</form>
+		</div>
+		<div id="console">
+		</div>
 	</div>
 </div>
 {% endblock %}
