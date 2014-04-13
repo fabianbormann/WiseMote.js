@@ -8,7 +8,7 @@ var Experiment = require('../models/Experiment.js')
 var User = require('../models/User.js');
 
 exports.getPage = function(req, res) {
-	if (!req.session.email) {
+    if (!req.session.email) {
 		res.redirect('/');
 	}
     else {
@@ -46,11 +46,33 @@ exports.getPage = function(req, res) {
                                     }
                                 }
 
+                                var error = null;
+                                if(req.session.error) {
+                                    if(req.session.error == 400) {
+                                        error = {}
+                                        error.head = "Reservation error!"
+                                        error.text = "Another reservation is in conflict with yours: Some of the nodes are reserved during the requested time.";
+                                    }
+                                    else if(req.session.error == 500) {
+                                        error = {}
+                                        error.head = "Reservation error!"
+                                        error.text = "Reservation end time parameter lies in the past!";
+                                    }
+                                    else {
+                                        error = {}
+                                        error.head = "Reservation error!"
+                                        error.text = "Unknown reservation error! Please check your internet connection.";
+                                    }   
+                                    delete req.session.error;
+                                }
+
                                 res.render('workspace', {
                                     projects : projects,
+                                    loading :  {text : '<p>Collect node information from testbed...</p>'},
                                     futureExperiments : futureExperiments,
                                     runningExperiments : runningExperiments,
-                                    pastExperiments : pastExperiments
+                                    pastExperiments : pastExperiments,
+                                    error : error
                                 });
                             }
                         });
@@ -139,11 +161,11 @@ exports.saveProject = function(req, res) {
 }
 
 exports.saveProjectConfiguration = function (req, res) {
-    var virtualNodeOption;
-    if(req.body.virtualNodeOption == "on")
+    var virtualNodeOption = false;
+    /*if(req.body.virtualNodeOption == "on")
         virtualNodeOption = true;
     else
-        virtualNodeOption = false;
+        virtualNodeOption = false;*/
 
     Project.findOne( {_id : req.params.projectId }, function(err, project) {
         if(err) {

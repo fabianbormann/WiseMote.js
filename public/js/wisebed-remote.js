@@ -40,7 +40,7 @@ var JsMote = (function() {
 
 		var experimentId;
 
-		this.start = function(experiment_id) {
+		this.setExperimentId = function(experiment_id) {
 			experimentId = experiment_id;
 		}
 

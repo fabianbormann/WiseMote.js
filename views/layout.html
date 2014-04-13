@@ -15,6 +15,13 @@
 
 </head>
 <body>
+	{% if loading %}
+	<div class="ui active dimmer"><div class="ui mini inverted text loader"></div></div>
+	<script type="text/javascript">
+	var htmlString = $.parseHTML('{{ loading.text }}');
+	$(".inverted.text.loader").append(htmlString[0].data);
+	</script>
+	{% endif %}
 	<div class="ui grid">
 		<div id="header" class="row">
 			{% block menu %} 

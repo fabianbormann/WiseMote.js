@@ -45,13 +45,13 @@
 
         $('.ui.checkbox').checkbox();
 
-        $('#virtualNodeOption').change(function() {
+        /*$('#virtualNodeOption').change(function() {
 		   if($(this).is(":checked")) {
 		      $('#useVirtualNode > label').text("No");
 		      return;
 		   }
 		   $('#useVirtualNode > label').text("Yes");
-		});
+		});*/
 
         $('#nodeConfig').click(function() {
             $('.virtualNode.modal')
@@ -121,7 +121,7 @@
 		  	</div>
 		</div>
 		<div class="ui divider"></div>
-    	<table id="projectOptions">
+    <!--<table id="projectOptions">
 	    <tr>
 	    <td><label>Use virtual node additional in real enviroment</label></td>
 	    <td><div id="useVirtualNode" class="ui toggle checkbox">
@@ -133,8 +133,8 @@
 	  		<label for="virtualNodeOption">Yes</label>
 	  		{% endif %}
 		</div></td>
-		</tr>
-		</table>
+		</tr> 
+		</table>-->
 		</form>
 		<h2>Members</h2>
 		{% for member in JSON.parse(project.members) %}

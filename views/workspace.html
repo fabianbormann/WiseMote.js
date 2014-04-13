@@ -16,7 +16,6 @@
             selectedNodes.push(id)
         }
         else {
-            console.log(id)
             selectedNodes.splice( $.inArray(id, selectedNodes), 1);
         }
 
@@ -29,7 +28,7 @@
             };
 
             $("#selectedNodes")
-                .removeClass( "yellow" )
+                .removeClass( "yellow red" )
                 .html( inSelectedNodes );
         }
         else {
@@ -51,44 +50,119 @@
             .modal()
         ;
 
-        $('.ui.slider.checkbox').checkbox();
+        $('#showFultureExperiments').checkbox();
+        $('#showPastExperiments').checkbox();
+
+        $('#projectName').on('input', function() {
+            if($( this ).val().length > 49 )
+                $('#projectNameInfo').show();
+            else
+                $('#projectNameInfo').hide(); 
+        });
+
+        $('#experimentName').on('input', function() {
+            if($( this ).val().length > 49 )
+                $('#experimentNameInfo').show();
+            else
+                $('#experimentNameInfo').hide(); 
+        });
 
         $('#pastExperiments').hide();
         $('#fultureExperiments').hide();
 
         $('#showFultureExperiments').change(function() {
            if($(this).is(":checked")) {
-                $('#fultureExperiments').hide();
+                $('#fultureExperiments').show();
                 $('#fultureExperimentsOption > label').text("Show fulture experiments");
                 return;
            }
-           $('#fultureExperiments').show();
-           $('#fultureExperimentsOption > label').text("Hide fulture experiments");
+           $('#fultureExperiments').hide();
         });
 
         $('#showPastExperiments').change(function() {
            if($(this).is(":checked")) {
-                $('#pastExperiments').hide();
+                $('#pastExperiments').show();
                 $('#pastExperimentsOption > label').text("Show past experiments");
                 return;
            }
-           $('#pastExperiments').show();
-           $('#pastExperimentsOption > label').text("Hide past experiments");
-        });
-
-        $('#selectNodes').click(function() {
-            $('.nodes.modal')
-            .modal('setting', 'closable', false)
-            .modal('show');
+           $('#pastExperiments').hide();
         });
 
         $('.projectSelection')
             .dropdown({
                 onChange: function(key, value) {
                     $("#selectedProject")
-                        .removeClass( "yellow" )
+                        .removeClass( "yellow red" )
                         .addClass( "green" )
                         .html(value);
+            }
+        });
+
+        $('#startReservation').click(function() {
+            
+            timeRegExp = new RegExp(/\d\d\:\d\d/);
+            dateRegExp = new RegExp(/\d\d\d\d\-\d\d\-\d\d/);
+
+            if($('#useProject').val() == "") {
+                $('#selectedProject').removeClass("yellow").addClass("red");
+            }
+            else if($('#nodeSelection').val() == "" || $('#nodeSelection').val() == "[]") {
+                $("#selectedNodes").removeClass("yellow").addClass("red");
+            }
+            else if( !dateRegExp.test($('#startDatePicker').val()) ) {
+                $('#startDatePickerInput').addClass("error");
+                $('#startDatePicker').val("yyyy-mm-dd")
+            }
+            else if( !dateRegExp.test($('#endDatePicker').val()) ) {
+                $('#endDatePickerInput').addClass("error");
+                $('#endDatePicker').val("yyyy-mm-dd")
+            }
+            else if( !timeRegExp.test($('#startTimePicker').val()) ) {
+                $('#startTimePickerInput').addClass("error");
+                $('#startTimePicker').val("hh:mm")
+            }
+            else if( !timeRegExp.test($('#endTimePicker').val()) ) {
+                $('#endTimePickerInput').addClass("error");
+                $('#endTimePicker').val("hh:mm")
+            }
+            else {
+                $( "#reservationForm" ).submit();
+            }
+        });
+
+        $('#startTimePicker').change(function() {
+            if($('#startTimePickerInput').hasClass("error")) {
+                timeRegExp = new RegExp(/\d\d\:\d\d/);
+                if( timeRegExp.test($('#startTimePicker').val()) ) {
+                    $('#startTimePickerInput').removeClass("error");
+                }
+            }
+        });
+
+        $('#endTimePicker').change(function() {
+            if($('#endTimePickerInput').hasClass("error")) {
+                timeRegExp = new RegExp(/\d\d\:\d\d/);
+                if( timeRegExp.test($('#endTimePicker').val()) ) {
+                    $('#endTimePickerInput').removeClass("error");
+                }
+            }
+        });
+
+        $('#startDatePicker').change(function() {
+            if($('#startDatePickerInput').hasClass("error")) {
+                dateRegExp = new RegExp(/\d\d\d\d\-\d\d\-\d\d/);
+                if( dateRegExp.test($('#startDatePicker').val()) ) {
+                    $('#startDatePickerInput').removeClass("error");
+                }
+            }
+        });
+
+        $('#endDatePicker').change(function() {
+            if($('#endDatePickerInput').hasClass("error")) {
+                dateRegExp = new RegExp(/\d\d\d\d\-\d\d\-\d\d/);
+                if( dateRegExp.test($('#endDatePicker').val()) ) {
+                    $('#endDatePickerInput').removeClass("error");
+                }
             }
         });
 
@@ -129,34 +203,72 @@
 
         $('#endTimePicker').timepicker('setTime', timeOffset);
 
-        $.get("/testbed/nodes", function(nodes) {
-            var testbedNodes = JSON.parse(nodes);
+        $.get("/testbed/nodes", function(nodeTable) {
 
-            $.each(testbedNodes, function(index, node) {
-                var nodeSensors = "";
+            $('.ui.active.dimmer').remove();
+            $('#newExperimentForm').append('<div class="ui nodes modal">\n'+
+               '<i class="circular inverted red close icon"></i>\n'+
+               '<div class="header">\n'+
+                   'Add nodes\n'+
+               '</div>\n'+
+               '<div class="content ui page grid">\n'+
+                   '<h3>Nodes</h3>\n'+
+                   '<div id="nodeTableContainer" class="sixteen wide column">\n'+
+                       '<table id="nodeTable" class="ui celled table segment">\n'+
+                           '<thead>\n'+
+                               '<tr>\n'+
+                                   '<th>#</th>\n'+
+                                   '<th>Node URN</th>\n'+
+                                   '<th>Type</th>\n'+
+                                   '<th>Sensors</th>\n'+
+                                   '<th>Selection</th>\n'+
+                               '</tr>\n'+
+                           '</thead>\n'+
+                           '<tbody>\n'+
+                           '</tbody>\n'+
+                           '<tfoot>\n'+
+                           '</tfoot>\n'+
+                       '</table>\n'+
+                   '</div>\n'+
+               '</div>\n'+
+               '<div class="actions">\n'+
+                   '<div class="ui button">Cancel</div>\n'+
+                   '<div class="ui button">OK</div>\n'+
+               '</div>\n'+
+            '</div>');
 
-                $.each(node.capability, function(id, sensor) {
-                    var sensorname = sensor.name;
-                    node.hexId = node.id.substring(node.id.indexOf("x"));
-                    sensorname = sensorname.substring(sensorname.indexOf("capability:")+11);
-                    nodeSensors += ','+sensorname;
-                });
+            $('#nodeTable > tbody:last').append(nodeTable);  
+            $('.ui.large.checkbox')
+                .checkbox({
+                    onEnable: function() {
+                        refreshSelectedNodes(this[0].name, true);
+                    },
+                    onDisable: function() {
+                        refreshSelectedNodes(this[0].name, false);
+                    }
+            });
 
-                $('#nodeTable > tbody:last').append('<tr><td>'+index+'</td><td>'+node.id+'</td><td>'+node.nodeType+'</td><td>'+nodeSensors+'</td><td><div class="ui large checkbox"><input type="checkbox" id="0'+node.hexId+'" name="'+node.id+'"><label></label></div></td></tr>');
-                
-                $('.ui.large.checkbox')
-                    .checkbox({
-                        onEnable: function() {
-                            refreshSelectedNodes(this[0].name, true);
-                        },
-                        onDisable: function() {
-                            refreshSelectedNodes(this[0].name, false);
-                        }
-                    });
+            $('#selectNodes').click(function() {
+                $('.nodes.modal')
+                .modal('setting', 'closable', false)
+                .modal('show');
             });
         });
     });
 </script>
+{% endblock %}
+
+{% block message %}
+{% if error %}
+    <div class="sixteen wide column">
+        <div class="ui error message">
+            <div class="header">
+                {{ error.head }}
+            </div>
+            {{ error.text }}
+        </div>
+    </div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -166,14 +278,15 @@
     <p class="infoline">Create a empty project and share it with other members. Clone or write some code snippets and start a experiment.</p>
     <a class="ui small green submit button" id="newProjectButton" onclick="showProjectForm();">Create a new project</a>
     <div id="newProjectForm" style="display: none">
-        <form id="reservationForm" class="ui form segment" action="/new/project" method="POST">
+        <form id="createProjectForm" class="ui form segment" action="/new/project" method="POST">
             <div class="field">
                 <label>Name</label>
                 <div class="ui labeled input">
-                    <input type="text" name="projectName" placeholder="Your projectname" required>
+                    <input type="text" id="projectName" name="projectName" placeholder="Your projectname" maxlength="50" required>
                     <div class="ui corner label">
                         <i class="asterisk icon"></i>
                     </div>
+                    <div style="display:none" id="projectNameInfo" class="ui red pointing above ui label">The name is limited to 50 characters</div>
                 </div>
             </div>  
             <div class="ui divider"></div>
@@ -221,47 +334,18 @@
     <div id="newExperimentForm" style="display: none">
         <form id="reservationForm" class="ui form segment" action="/experiment/start" method="POST">
             <input type="hidden" name="nodeSelection" id="nodeSelection">
-            <div class="ui nodes modal">
-                <i class="circular inverted red close icon"></i>
-                <div class="header">
-                    Add nodes
-                </div>
-                <div class="content ui page grid">
-                    <h3>Nodes</h3>
-                    <div id="nodeTableContainer" class="sixteen wide column">
-                        <table id="nodeTable" class="ui celled table segment">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Node URN</th>
-                                    <th>Type</th>
-                                    <th>Sensors</th>
-                                    <th>Selection</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                            <tfoot>
-                            </tfoot>
-                        </table>
-                    </div>
-                </div>
-                <div class="actions">
-                    <div class="ui button">Cancel</div>
-                    <div class="ui button">OK</div>
-                </div>
-            </div>
             <h2>Start experiment</h2>
             <div class="ui divider"></div>
             <div class="field">
                 <label>Name (optional)</label>
-                <input type="text" name="experimentName" placeholder="Project name will be used as default"> 
+                <input type="text" id="experimentName" name="experimentName" maxlength="50" placeholder="Project name will be used as default"> 
+                <div style="display:none" id="experimentNameInfo" class="ui red pointing above ui label">The name is limited to 50 characters</div>
             </div>
             <div class="ui divider"></div>
             <div id="selectedProject" class="ui small yellow message">Please select a project</div>
             <div class="ui pointing projectSelection dropdown labeled icon button">
                 <i class="code icon"></i> Projects
-                <input type="hidden" name="useProject">
+                <input type="hidden" id="useProject" name="useProject">
                 <div class="menu">
                     {% for project in projects %}
                     <div class="item" data-value="{{ project._id.toString() }}">{{ project.name }}</div>
@@ -280,7 +364,7 @@
                 <label>Start</label>
                 <div class="ui grid">
                     <div class="eight wide column">
-                        <div class="ui labeled input">
+                        <div id="startDatePickerInput" class="ui labeled input">
                             <input type="text" name="startDate" id="startDatePicker"> 
                             <div class="ui corner label">
                                 <i class="asterisk icon"></i>
@@ -288,7 +372,7 @@
                         </div>
                     </div>
                     <div class="eight wide column">
-                        <div class="ui labeled input">
+                        <div id="startTimePickerInput" class="ui labeled input">
                             <input type="text" name="startTime" id="startTimePicker"> 
                             <div class="ui corner label">
                                 <i class="asterisk icon"></i>
@@ -301,7 +385,7 @@
                 <label>End</label>
                 <div class="ui grid">
                     <div class="eight wide column">
-                        <div class="ui labeled input">
+                        <div id="endDatePickerInput" class="ui labeled input">
                             <input type="text" name="endDate" id="endDatePicker"> 
                             <div class="ui corner label">
                                 <i class="asterisk icon"></i>
@@ -309,7 +393,7 @@
                         </div>
                     </div>
                     <div class="eight wide column">
-                        <div class="ui labeled input">
+                        <div id="endTimePickerInput" class="ui labeled input">
                             <input type="text" name="endTime" id="endTimePicker"> 
                             <div class="ui corner label">
                                 <i class="asterisk icon"></i>
@@ -319,7 +403,7 @@
                 </div>
             </div>   
             <div class="ui divider"></div>
-            <button type="submit" class="ui small green labeled icon submit button"><i class="play icon"></i>Start reservation</button>
+            <button type="button" id="startReservation" class="ui small green labeled icon submit button"><i class="play icon"></i>Start reservation</button>
         </form>
     </div>
 
@@ -380,7 +464,12 @@
             <tr class="clickable" onclick="document.location = '/experiment/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
-                <td>{{ experiment.nodeUrns }}</td>
+                {% if experiment.nodeUrns.length > 30 %}
+                    <td id="{{ experiment._id.toString() }}">{{ experiment.nodeUrns.substr(0,30) }}...</td>
+                {% else %}
+                    <td id="{{ experiment._id.toString() }}">{{ experiment.nodeUrns }}</td>
+                {% endif %}
+                
                 <td>{{ experiment.from.getHours() }}:
                     {% if experiment.from.getMinutes() > 10 %}
                         {{ experiment.from.getMinutes() }}
@@ -398,6 +487,17 @@
                     {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
                 </td>
             </tr>
+            <script type="text/javascript">
+
+                var popupNodes = "{{ experiment.nodeUrns }}"; 
+                    popupNodes = popupNodes.split(",").join("\n");
+
+                $('#{{ experiment._id.toString() }}')
+                  .popup({
+                    content: popupNodes
+                  })
+                ;   
+            </script>
             {% endfor %}
             {% else %}
             <tr class="warning">
@@ -450,12 +550,12 @@
     </table>
     {% endif %}  
     <div class="ui divider"></div>  
-    <div class="ui slider checkbox" id="fultureExperimentsOption">
+    <div class="ui checkbox" id="fultureExperimentsOption">
         <input type="checkbox" id="showFultureExperiments" name="showFultureExperiments">
         <label for="showFultureExperiments">Show fulture experiments</label>
     </div>
     <br>
-    <div class="ui slider checkbox" id="pastExperimentsOption">
+    <div class="ui checkbox" id="pastExperimentsOption">
         <input type="checkbox" id="showPastExperiments" name="showPastExperiments">
         <label for="showPastExperiments">Show past experiments</label>
     </div>

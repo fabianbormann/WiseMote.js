@@ -13,6 +13,8 @@
 	$( document ).ready(function() {
 		var delay;
 
+		$(".ui.checkbox").checkbox();
+
 		$("#settings").show();
 		$("#console").hide();
 
@@ -32,6 +34,20 @@
 
 		io.on('incommingMessage', function(data) {
 		    $( "#console" ).append("<p><i>"+data.message.sourceNodeUrn+":</i> "+data.message.ascii+"</p>");
+		}); 
+
+		io.on('flashingProgress', function(progress) {
+			var state = 100;
+			for(var urn in progress) {
+				if(progress[urn].statusCode < state)
+					state = progress[urn].statusCode;
+			}
+			$('#progressbar').width(state+'%');
+		}); 
+
+		io.on('finishFlashing', function(data) {
+			console.log(data.message)
+		    $('.ui.active.dimmer').remove();
 		}); 
 	
 		function updatePreview() {
@@ -90,7 +106,14 @@
 					<textarea id="code" name="code">{{ experiment.code }}</textarea>
 				</div>   
 				<div class="ui divider"></div>
-				<input type="submit" class="ui blue button" value="Save"> 
+				<div class="inline field">
+				    <div class="ui checkbox">
+				      	<input name="overrideOption" type="checkbox">
+				      	<label>Override project code</label>
+				    </div>
+				</div>
+				<div class="ui divider"></div>
+				<input type="submit" class="ui blue button" value="Save Experiment"> 
 			</form>
 		</div>
 		<div id="console">

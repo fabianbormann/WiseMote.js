@@ -21,7 +21,33 @@ module.exports = function(io) {
 
 		testbed.getWiseML(null,
 		function(wiseml) {
-			res.send(JSON.stringify(wiseml.setup.node));
+			var nodes = wiseml.setup.node;
+
+			var nodeUrns = nodes.map(function (node) { return node.id;	});
+			testbed.experiments.areNodesConnected(nodeUrns, function(nodeStatus) {
+				var nodeTable = "";
+
+				for(var node = 0; node < nodes.length; node++) {
+					var nodeSensors = "";
+					for(var sensor = 0; sensor < nodes[node].capability.length; sensor++) {
+	                    var sensorname = nodes[node].capability[sensor].name;
+	                    nodes[node].hexId = nodes[node].id.substring(nodes[node].id.indexOf("x"));
+	                    sensorname = sensorname.substring(sensorname.indexOf("capability:")+11);
+	                    nodeSensors += ','+sensorname;
+					}
+					
+					nodeSensors = nodeSensors.substr(1);
+
+					if(nodeStatus[nodes[node].id].statusCode == 1) {
+		                nodeTable += '<tr><td>'+node+'</td><td>'+
+		                				nodes[node].id+'</td><td>'+nodes[node].nodeType+'</td><td>'+nodeSensors+
+		                				'</td><td><div class="ui large checkbox"><input type="checkbox" id="0'+nodes[node].hexId+
+		                				'" name="'+nodes[node].id+'"><label></label></div></td></tr> \n';
+	               	}
+	            }
+
+	            res.send(nodeTable);
+			}, function(err) {console.log("Error: "+err)});
 		}, 
 		function(err) {
 			if(err) {
@@ -34,8 +60,7 @@ module.exports = function(io) {
 	}
 
 	routes.reserveNodes = function(req, res) {
-
-	    var nodes = JSON.parse(req.body.nodeSelection);
+		var nodes = JSON.parse(req.body.nodeSelection);
 	    var projectId = req.body.useProject;
 
 	    Project.findOne( {_id : projectId}, function(err, project) {
@@ -93,7 +118,7 @@ module.exports = function(io) {
 						'<script src="/js/wisebed-remote.js"></script>\n' +
 						'<script type="text/javascript">\n' +
 					    '  jsMote = new JsMote();\n' +
-					    '  jsMote.start("'+experiment._id.toString()+'");\n' +
+					    '  jsMote.setExperimentId("'+experiment._id.toString()+'");\n' +
 					  	'</script>\n';
 					  	var postConfigCode = experimentCode.substr(rightSpiltIndex);
 					  	
@@ -115,9 +140,6 @@ module.exports = function(io) {
 										if(err) {
 											throw err;
 										}
-										else if (from >= now && now < to) {
-											res.redirect("/experiment/"+new_experiment._id.toString());
-										}
 										else {
 											res.redirect("/workspace");
 										}
@@ -131,12 +153,18 @@ module.exports = function(io) {
 	    }); 
 
 		function reservationError (jqXHR, textStatus, errorThrown) {
-			console.log(JSON.stringify(jqXHR));
-			console.log(textStatus);
-			console.log(errorThrown);
+			req.session.error = jqXHR.status;
 			res.redirect("/workspace");
 		}
 
+	}
+
+	function broadcastFlashingProgress(progress) {
+		io.broadcast('flashingProgress', progress);
+	}
+
+	function broadcastFinishedFlashing(result) {
+		io.broadcast('finishFlashing', {message : JSON.stringify(result)});
 	}
 
 	routes.showExperiment = function(req, res) {
@@ -167,12 +195,8 @@ module.exports = function(io) {
 								testbed.experiments.flashNodes(
 									experiment.experimentId, 
 									data, 
-									function(result) {
-										console.log("MyResult : "+result);
-									},
-									function(progress) {
-										console.log("MyProgress : "+progress);
-									},
+									broadcastFinishedFlashing,
+									broadcastFlashingProgress,
 									function(jqXHR, textStatus, errorThrown) {
 										console.log("error! :"); 
 										console.log(jqXHR);
@@ -184,7 +208,9 @@ module.exports = function(io) {
 								experiment.update({ $set: { flashed: true }}).exec();
 
 								res.render("experiment", {
-									experiment : experiment
+									experiment : experiment,
+									loading :  {text : 
+										'<p>Flashing remote application onto sensor nodes.</p><div class="ui active striped progress"><div id="progressbar" class="bar" style="width: 0%; display:block;"></div></div>'},
 								});	
 							}
 						});
