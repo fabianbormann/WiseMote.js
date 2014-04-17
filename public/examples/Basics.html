@@ -1,0 +1,80 @@
+<html>
+<head>
+<style>
+	body {font-family: 'Open Sans', sans-serif;}
+</style>
+ <!-- Configuration: Please do not remove -->
+<script src="/js/virtual-remote.js"></script>
+<script type="text/javascript">
+  var config = {
+    led : true,
+    light : 30,
+    temperature : 25,
+    delay : 500
+  };
+  jsMote = new JsMote();
+  jsMote.start(config);
+</script>
+<!-- End of Configuration -->
+<script type="text/javascript">
+    function turnLedOn() {
+      jsMote.switchLed(true);
+    }
+    
+    function turnLedOff() {
+      jsMote.switchLed(false);
+    }
+    
+    function alertMessage() {
+      var text = document.getElementById("myAlertMessage").value;
+      jsMote.alert(text);		
+    }
+    
+    function checkSensor() {
+      if(document.getElementById("light").checked) {
+        jsMote.getSensorValue("light");
+      }else if(document.getElementById("temperature").checked) {
+		jsMote.getSensorValue("temperature");
+      }
+    }
+    
+    function broadcast() {
+      var text = document.getElementById("broadcastMessage").value;
+      jsMote.broadcast(text);
+    }
+    
+    function callbackExample() {
+      jsMote.getSensorValue("temperature", function(value) {
+        if(value > 20) {
+        	jsMote.broadcast("It's warm today. "+value+unescape("%B0C"));
+        }
+        else {
+        	jsMote.broadcast("Turn up the heating! "+value+unescape("%B0C"));
+        }
+      })
+    }
+  </script>
+</head>
+<body>
+  <h1>Basics</h1>
+  <p>Click on these buttons below to change the led state.</p>
+  <button onclick="turnLedOn();">Led on</button><br>
+  <button onclick="turnLedOff();">Led off</button>
+  <p>Let the wisebed node alert a message:</p>
+  <input type="text" id="myAlertMessage">
+  <button onclick="alertMessage();">alert</button>
+  <p>Get sensor values like light or temperature</p>
+  <input type="radio" value="light" id="light" name="sensor" checked>
+  Light
+  <br>
+  <input type="radio" value="temperature" id="temperature" name="sensor">
+  Temperature
+  <br><br>
+  <button onclick="checkSensor();">Get value</button>
+  <p>Broadcast something:</p>
+  <input type="text" id="broadcastMessage">
+  <button onclick="broadcast();">Broadcast</button>
+  <p>Define callbacks for program logic</p>
+  <button onclick="callbackExample();">Callback example</button>
+</body>
+</html>

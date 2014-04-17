@@ -1,0 +1,142 @@
+<html>
+<head>
+<style>
+	body {font-family: 'Open Sans', sans-serif;}
+    #visualization {background-color: #eee}
+</style>
+<!-- Configuration: Please do not remove -->
+<script src="/js/jquery-1.9.1.js"></script>
+<script src="/js/virtual-remote.js"></script>
+<script type="text/javascript">
+  var config = {
+    led : true,
+    light : 30,
+    temperature : 25,
+    delay : 500
+  };
+  jsMote = new JsMote();
+  jsMote.start(config);
+</script>
+<!-- End of Configuration -->
+<script type="text/javascript">   
+  var Nodes = []; 
+
+  function addNode() {
+    new Node("test");
+  }
+
+  function Node(id) {
+    this.id = id;
+
+    this.selected = false;
+
+    this.x;
+    this.y;
+
+    var self = this;
+
+    this.setPosition = function(x,y)  {
+      this.x = x;
+      this.y = y;
+      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id);
+    }
+
+    this.toggleSelection = function() {
+      this.selected = this.selected ? false : true;
+      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id);
+    }
+
+    return function() {
+      Nodes.push(self);
+      arrangeNodes();
+    }()
+  }
+
+  function drawNode(x, y, color, id) {
+    var context = $("#visualization")[0].getContext('2d');
+    context.fillStyle = color;
+    context.fillRect(x,y,50,50);
+
+    context.fillStyle = "#000000";
+    context.font = "10px Arial";
+    context.fillText(id, x+5, y+25);
+  }
+
+  function drawMessage(from, to, label, status) {
+    var context = $("#visualization")[0].getContext('2d');
+    context.strokeStyle="red";
+    context.fillStyle="red";
+    context.lineWidth=1;
+    
+    context.beginPath();
+    context.moveTo(from.x+25,from.y+25);
+    context.lineTo(to.x+25,to.y+25);
+    context.stroke();
+
+    var radians = Math.atan( (to.y-from.y)/(to.x-from.x) );
+    radians += ((to.x>from.x) ? 90 : -90 )*Math.PI/180;
+    
+    context.save();
+    context.beginPath();
+    context.translate(to.x+25,to.y+25);
+    context.rotate(radians);
+    context.moveTo(0,0);
+    context.lineTo(5,25);
+    context.lineTo(-5,25);
+    context.closePath();
+    context.restore();
+    context.fill();
+
+    context.fillStyle = "AAAAEE";
+    context.fillRect((from.x+to.x)/2,(from.y+to.y)/2,100,25);
+
+    context.fillStyle = "#000000";
+    context.font = "10px Arial";
+    context.fillText(label, (from.x+to.x)/2+5, (from.y+to.y)/2+12.5);    
+  }
+
+  function arrangeNodes() {
+    var context = $("#visualization")[0].getContext('2d');
+    context.clearRect(0,0,$("#visualization").width(),$("#visualization").height());
+
+    var radius = Math.min($("#visualization").width()/2-50,$("#visualization").height()/2-50);
+    var center = {
+      x : ($("#visualization").width()-50)/2,
+      y : ($("#visualization").height()-50)/2
+    };
+
+    for (var i = 0; i < Nodes.length; i++)
+    {
+      var x = center.x + radius * Math.cos(2 * Math.PI * i / Nodes.length);
+      var y = center.y + radius * Math.sin(2 * Math.PI * i / Nodes.length); 
+
+      Nodes[i].setPosition(x,y);
+    }
+  }
+
+  $( document ).ready(function() {
+    $('#visualization').click(function(event) {
+      var x = parseInt (event.pageX) - ( parseInt ($("#visualization").offset().left) );
+      var y = parseInt (event.pageY) - ( parseInt ($("#visualization").offset().top)) ;
+
+      console.log("click @ "+x+" "+y);
+
+      for (var i = 0; i < Nodes.length; i++){
+        if(x > Nodes[i].x && x < Nodes[i].x+50 && y > Nodes[i].y && y < Nodes[i].y+50) {
+          Nodes[i].toggleSelection();
+        }
+      }   
+    });
+  });
+</script>
+</head>
+<body>
+  <h1>Visualization</h1>
+  <canvas id="visualization" width="800" height="600"></canvas>
+  <br>
+  <button>Led On</button>
+  <button>Led Off</button>
+  <button>Broadcast "Hello World"</button>
+  <button OnClick="addNode();">test</button>
+</body>
+</html>

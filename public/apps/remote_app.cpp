@@ -119,29 +119,39 @@ public:
 
 			getSensorValue(argument, ticket_id);
 		}
+
+		if (strcmp(function, "getLedState") == 0) {
+			getLedState(ticket_id);
+		}
 	}
 
-	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len,
-			Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
+	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len, Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
+		char * ticket_id;
+		char * timestamp;
+		char * payload;
 
-		size_t from_len = strlen(reinterpret_cast<char*>(from));
-		size_t id_len = strlen(reinterpret_cast<char*>(radio_->id()));
-		size_t response_len = from_len+id_len;
+		char msg[len];
+		sprintf(msg, "%s", buf);
 
-		char response[51+response_len];
-		sprintf(response,"receive/%x/%x/%d/%d/%s", radio_->id(), from, ext.link_metric(), clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), buf);
+		ticket_id = strtok(msg, "/");
+		timestamp = strtok(NULL, "/");
+		payload = strtok(NULL, "/");
+
+		char response[512];
+		uint16 n = snprintf((char*)response, 511,"%s%x/%x/%d/%d/%d/%s", ticket_id, from, radio_->id(), ext.link_metric(), timestamp,
+				clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), payload);
+		response[n] = '\0';
 
 		reply(response);
 	}
 
 	void broadcast(char* message, char* ticket_id) {
-
 		size_t message_len = strlen(message);
 		size_t ticket_id_len = strlen(ticket_id);
 		size_t id_len = strlen(reinterpret_cast<char*>(radio_->id()));
 		size_t response_len = message_len+ticket_id_len+id_len;
 		char response[17+response_len];
-		sprintf(response, "%s %s broadcasting at %x", ticket_id, message, radio_->id());
+		sprintf(response, "%s%d/%x/%s", ticket_id, clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), radio_->id(), message);
 		reply(response);
 
 		radio_block_data_t buffer_[512];
@@ -162,37 +172,44 @@ public:
 		reply(response);
 	}
 
+	void getLedState(char* ticket_id) {
+		char buffer_[64];
+		size_t n = snprintf((char*)buffer_, 63, "%s%s", ticket_id, led_state ? "true" : "false");
+		buffer_[n] = '\0';
+
+		reply(buffer_);
+	}
+
 	void switch_led_state(bool state, char* ticket_id) {
 
 		char* message;
 
 		if(!state){
 			if (led_state) {
-				message = (char *)"turn led off";
+				message = (char *)"turned off";
 				led_state = false;
 				cm_->led_off();
 			}
 			else{
-				message = (char *)"led state has already been off";
+				message = (char *)"already off";
 			}
 		}
 		else {
 			if (!led_state) {
-				message = (char *)"turn led on";
+				message = (char *)"turned on";
 				led_state = true;
 				cm_->led_on();
 			}
 			else{
-				message = (char *)"led state has already been on";
+				message = (char *)"already on";
 			}
 		}
 
-		size_t msg_len = strlen(message);
-		size_t id_len = strlen(ticket_id)+1;
-		size_t response_len = id_len+msg_len;
+		char buffer_[512];
+		uint16 n = snprintf((char*)buffer_, 511, "%s%s", ticket_id, message);
+		buffer_[n] = '\0';
 
-		char* response = strncat(ticket_id, message, response_len);
-		reply(response);
+		reply(buffer_);
 	}
 
 	void init_environmental_module(Os::AppMainParameter& value) {

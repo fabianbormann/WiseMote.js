@@ -1,8 +1,4 @@
-var mongoose = require('mongoose');
-var db = mongoose.connection;
-
-var Example = require('../models/Example.js');
-
+var fs = require('fs');
 
 exports.welcome = function(req, res) {
 	if (!req.session.email) {
@@ -15,11 +11,15 @@ exports.welcome = function(req, res) {
 };
 
 exports.getExamples = function(req, res) {
-	Example.find({}, function(err, examples) {
-		if(err) {
+	fs.readdir('./public/examples', function(err, files) {
+		if(err) { 
 			throw err;
 		}
 		else {
+			var examples = [];
+			for(var example = 0; example < files.length; example++) {
+				examples.push(files[example].split('.')[0]);
+			}
 			res.send(examples);
 		}
 	});

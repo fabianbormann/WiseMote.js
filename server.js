@@ -38,7 +38,7 @@ app.get('/project/:projectId', workspace.showProject);
 app.get('/home', home.welcome)
 app.get('/testbed/nodes', testbed.getNodes);
 app.get('/experiment/:experimentId', testbed.showExperiment);
-app.get('/show/example/:exampleId', workspace.showExample);
+app.get('/show/example/:name', workspace.showExample);
 app.get('/example/:exampleId/clone', workspace.cloneExample);
 app.get('/list/examples', home.getExamples);
 
@@ -54,13 +54,6 @@ app.post('/nodes/message/send/:experimentId', testbed.sendMessage);
 /***
 Use only in edit mode.
 **/
-
-app.get('/new/example/:name', workspace.newExample);
-app.post('/example/:exampleId/save', workspace.saveExample);
-app.get('/admin/login', function (req, res) {
-	req.session.email = "bormann@informatik.uni-luebeck.de";
-	res.redirect('/home');
-});
 
 app.listen(3000);
 console.log('Listening on port 3000');

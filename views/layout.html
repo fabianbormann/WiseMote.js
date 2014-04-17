@@ -32,7 +32,7 @@
 			        $.get('/list/examples', function(examples) {
 			        	$.each(examples, function(index, example) {
 			        		$('#examples').append('<a class="item" href="/show/example/'+
-			        			example._id.toString()+'">'+example.name+'</a>');
+			        			example+'">'+example+'</a>');
 			        	});
 			        });
 

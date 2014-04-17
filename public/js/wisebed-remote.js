@@ -149,6 +149,22 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
 		};
 
+		this.getLedState = function(callback) {
+			switch(arguments.length) {
+		        case 0: callback = this.receive;
+		        case 1: break;
+		        default: throw new Error('Illegal argument count!')
+	    	}			
+
+			var function_type = CoAP.getHexString("getLedState");
+			var ticketId = getTicketId("getLedState");
+			var hexTicketId = CoAP.getHexString(ticketId);
+
+			tickets.checkIn(ticketId, callback);
+
+			sendMessage(function_type+delimiter+hexTicketId+delimiter);	    	
+		}
+
 		this.receive = function(message) {
 			alert(message);
 		};

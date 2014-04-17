@@ -1,9 +1,9 @@
 var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
+var fs = require('fs');
 var db = mongoose.connection;
 
 var Project = require('../models/Project.js');
-var Example = require('../models/Example.js');
 var Experiment = require('../models/Experiment.js')
 var User = require('../models/User.js');
 
@@ -244,47 +244,18 @@ exports.addProjectMember = function(req, res) {
     });
 }
 
-exports.newExample = function (req, res) {
-    var example = new Example({
-        name : req.params.name
-    });
-
-    example.save(function (err, example) {
-        if (err) 
-            throw err;
-        else {  
-            console.log(example._id);
-            res.redirect('/');
-        }       
-    })
-}
 
 exports.showExample = function (req, res) {
-    Example.findOne({ _id : req.params.exampleId }, function (err, example) {
-        if(err) {
-            throw err;
+    fs.readFile('./public/examples/'+req.params.name+'.html', function (err, example) {
+        if (err) {
+            redirect('workspace');
         }
         else {
             res.render('example', {
-                example : example
+                example : {code : example.toString(), name : req.params.name}
             });
         }
     });
-}
-
-exports.saveExample = function (req, res) {
-    Example.findOne({ _id : req.params.exampleId }, function (err, example) {
-        if(err) {
-            throw err;
-        }
-        else {
-            example.update( {code : req.body.code}, function () {
-                res.render('example', {
-                    example : example
-                });
-            });
-        }
-    });    
 }
 
 exports.cloneExample = function (req, res) {
