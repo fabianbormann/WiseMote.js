@@ -29,16 +29,23 @@
 
 typedef wiselib::OSMODEL Os;
 typedef Os::Uart Uart;
+//typedef Os::Radio Radio;
+typedef Os::ExtendedRadio Radio;
 
 class RemoteApplication {
 
 	typedef Uart::block_data_t block_data_t;
 	typedef Uart::size_t size_t;
+	typedef Radio::block_data_t radio_block_data_t;
+	typedef Radio::size_t radio_size_t;
+	typedef Radio::ExtendedData ExtendedData;
 
 public:
+
 	void init(Os::AppMainParameter& value) {
 		ospointer = &value;
-		radio_ = &wiselib::FacetProvider<Os, Os::Radio>::get_facet(value);
+
+		radio_ = &wiselib::FacetProvider<Os, Os::ExtendedRadio>::get_facet(value);
 		timer_ = &wiselib::FacetProvider<Os, Os::Timer>::get_facet(value);
 		debug_ = &wiselib::FacetProvider<Os, Os::Debug>::get_facet(value);
 		uart_ = &wiselib::FacetProvider<Os, Os::Uart>::get_facet(value);
@@ -51,10 +58,8 @@ public:
 
 		init_environmental_module(value);
 
-		radio_->set_channel(12);
 		radio_->enable_radio();
-		radio_->reg_recv_callback<RemoteApplication,
-				&RemoteApplication::receive_radio_message> (this);
+		radio_->reg_recv_callback<RemoteApplication, &RemoteApplication::receive_radio_message> (this);
 
 		uart_->enable_serial_comm();
 		Uart::block_data_t x[] = "123456789:\n";
@@ -62,7 +67,6 @@ public:
 
 		uart_->reg_read_callback<RemoteApplication,
 				&RemoteApplication::receive_packet> (this);
-
 	}
 
 	void receive_packet(size_t len, block_data_t *buf) {
@@ -117,17 +121,16 @@ public:
 		}
 	}
 
-	void receive_radio_message(Os::Radio::node_id_t from,
-			Os::Radio::size_t len, Os::Radio::block_data_t *buf) {
+	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len,
+			Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
 
-		size_t buf_len = strlen(reinterpret_cast<char*>(buf));
 		size_t from_len = strlen(reinterpret_cast<char*>(from));
 		size_t id_len = strlen(reinterpret_cast<char*>(radio_->id()));
+		size_t response_len = from_len+id_len;
 
-		size_t response_len = buf_len+from_len+id_len;
+		char response[51+response_len];
+		sprintf(response,"receive/%x/%x/%d/%d/%s", radio_->id(), from, ext.link_metric(), clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), buf);
 
-		char response[38+response_len];
-		sprintf(response,"%s was received by %s the message was send from %s",buf, radio_->id(), from);
 		reply(response);
 	}
 
@@ -135,23 +138,18 @@ public:
 
 		size_t message_len = strlen(message);
 		size_t ticket_id_len = strlen(ticket_id);
-
-		char* msg = strncat(ticket_id, message, message_len+ticket_id_len);
-
 		size_t id_len = strlen(reinterpret_cast<char*>(radio_->id()));
-
 		size_t response_len = message_len+ticket_id_len+id_len;
-
 		char response[17+response_len];
-		sprintf(response, "%s broadcasting at %x",ticket_id, radio_->id());
-
+		sprintf(response, "%s %s broadcasting at %x", ticket_id, message, radio_->id());
 		reply(response);
 
-		size_t len = strlen(msg);
-		Os::Radio::block_data_t buf[len];
-		strcpy((char*) buf, msg);
+		radio_block_data_t buffer_[512];
+		radio_size_t n = snprintf((char*)buffer_, 511, "%s/%d/%s", ticket_id, clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), message);
+		buffer_[n] = '\0';
+		radio_size_t buffer_size_ = n + 1;
 
-		radio_->send(Os::Radio::BROADCAST_ADDRESS, len, buf);
+		radio_->send( Os::Radio::BROADCAST_ADDRESS, buffer_size_, buffer_);
 	}
 
 	void alert(char* message, char* ticket_id) {
@@ -247,7 +245,7 @@ public:
 
 private:
 	Os::AppMainParameter* ospointer;
-	Os::Radio::self_pointer_t radio_;
+	Os::ExtendedRadio::self_pointer_t radio_;
 	Os::Timer::self_pointer_t timer_;
 	Os::Debug::self_pointer_t debug_;
 	Os::Clock::self_pointer_t clock_;
