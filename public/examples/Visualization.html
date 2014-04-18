@@ -7,23 +7,28 @@
 <!-- Configuration: Please do not remove -->
 <script src="/js/jquery-1.9.1.js"></script>
 <script src="/js/virtual-remote.js"></script>
-<script type="text/javascript">
-  var config = {
-    led : true,
-    light : 30,
-    temperature : 25,
-    delay : 500
-  };
+<script type="text/javascript">  
   jsMote = new JsMote();
-  jsMote.start(config);
+  
+  jsMote.addNode({
+    id : "0x0001",
+    led : false,
+    light : 44,
+    temperature : 22,
+    delay : 500
+  });
+  
+  jsMote.addNode({
+    id : "0x0002",
+    led : false,
+    light : 9,
+    temperature : 29,
+    delay : 300
+  });
 </script>
 <!-- End of Configuration -->
 <script type="text/javascript">   
   var Nodes = []; 
-
-  function addNode() {
-    new Node("test");
-  }
 
   function Node(id) {
     this.id = id;
@@ -127,7 +132,17 @@
         }
       }   
     });
+
+    jsMote.alert("test", function(message) {
+      new Node(message.split(":")[0]);
+    });
   });
+
+  function broadcast() {
+    jsMote.broadcast("Hello World", function(message) {
+
+    });
+  }
 </script>
 </head>
 <body>
@@ -137,6 +152,5 @@
   <button>Led On</button>
   <button>Led Off</button>
   <button>Broadcast "Hello World"</button>
-  <button OnClick="addNode();">test</button>
 </body>
 </html>

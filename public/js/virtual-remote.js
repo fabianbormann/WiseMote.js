@@ -1,18 +1,32 @@
 var JsMote = (function() {
 
-	var virtualNode;
+	var virtualNodes = [];
 
 	function VirtualNode () {
+		var id = "0x0000";
 		var ledState = false;
 		var temperature = 20;
 		var light = 55;
 		var delay = 1000; 
 
 		this.configure = function(config) {
+			id = config.id;
 			ledState = config.led;
 			temperature = config.temperature;
 			light = config.light;
 			delay = config.delay; 		
+		}
+
+		this.getId = function() {
+			return id;
+		}
+
+		this.getDelay = function() {
+			return delay;
+		}
+
+		this.receiveRadioMessage = function(from, message, metrics) {
+			setTimeout(function(){ alert(id+': received Message "'+message+'" from '+from) }, metrics);
 		}
 
 		this.request = function(message) {
@@ -57,16 +71,17 @@ var JsMote = (function() {
 		}
 
 		function response (message) {
-			setTimeout(function(){ message.callback(message.content) }, delay);
+			setTimeout(function(){ message.callback(id+":"+message.content) }, delay);
 		}
 	};
 
 	var remote = function() {
 
-		this.start = function(config) {
+		this.addNode = function(config) {
 	    	if(config) {
-	    		virtualNode = new VirtualNode();
+	    		var virtualNode = new VirtualNode();
 	    		virtualNode.configure(config);
+	    		virtualNodes.push(virtualNode);
 	    	}
     	}	
 
@@ -87,8 +102,10 @@ var JsMote = (function() {
 				params : message,
 				callback : callback
 			};
-
-			virtualNode.request(message);
+			
+			$.each(virtualNodes, function(index, virtualNode) {
+				virtualNode.request(message);
+			});
 		};
 
 		/**
@@ -111,7 +128,9 @@ var JsMote = (function() {
 				callback : callback
 			};
 
-			virtualNode.request(message);
+			$.each(virtualNodes, function(index, virtualNode) {
+				virtualNode.request(message);
+			});
 		};
 
 		/**
@@ -135,7 +154,14 @@ var JsMote = (function() {
 				callback : callback
 			};
 
-			virtualNode.request(message);
+			$.each(virtualNodes, function(index, virtualNode) {
+				virtualNode.request(message);
+
+				$.each(virtualNodes, function(broadcastIndex, otherNode) {
+					if(virtualNode.getId() != otherNode.getId())
+						otherNode.receiveRadioMessage(virtualNode.getId(), message.params, virtualNode.getDelay()+200);
+				})
+			});
 		};
 
 		/**
@@ -158,7 +184,9 @@ var JsMote = (function() {
 				callback : callback
 			};
 
-			virtualNode.request(message);
+			$.each(virtualNodes, function(index, virtualNode) {
+				virtualNode.request(message);
+			});
 		};
 
 		/**
