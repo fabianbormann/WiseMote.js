@@ -131,10 +131,10 @@ module.exports = function(io) {
 									throw err;
 								}
 								else {
-									var userExperiments = JSON.parse(user.experiments);
+									var userExperiments = user.experiments;
 									userExperiments.push(new_experiment._id);
 									user.update({
-										experiments : JSON.stringify(userExperiments)
+										experiments : userExperiments
 									}, function (err, updatedUser) {
 										var now = new Date();
 										if(err) {
@@ -188,7 +188,7 @@ module.exports = function(io) {
 								var appImage = new Buffer(image).toString('base64');
 
 								data.configurations.push({
-									nodeUrns : experiment.nodeUrns.split(","),
+									nodeUrns : experiment.nodeUrns,
 									image : "data:application/macbinary;base64,"+appImage
 								});
 
@@ -234,6 +234,34 @@ module.exports = function(io) {
 				throw err;
 			}
 			else {
+				if(req.body.overrideOption == "on") {
+					Project.findOne({ _id : experiment.project }, function (err, project) {
+						if(err) {
+							throw err;
+						}
+						else {
+							var newProjectCode = req.body.code;
+							var oldProjectCode = project.code;
+
+							var experimentLeftSpiltIndex = newProjectCode.indexOf("<!-- Configuration: Please do not remove -->");
+							var experimentRightSpiltIndex = newProjectCode.indexOf("<!-- End of Configuration -->");
+
+							var projectLeftSpiltIndex = oldProjectCode.indexOf("<!-- Configuration: Please do not remove -->");
+							var projectRightSpiltIndex = oldProjectCode.indexOf("<!-- End of Configuration -->");
+
+							var Configuration = oldProjectCode.slice(projectLeftSpiltIndex, projectRightSpiltIndex);
+
+							var preConfigCode = newProjectCode.substr(0,experimentLeftSpiltIndex);
+						  	var postConfigCode = newProjectCode.substr(experimentRightSpiltIndex);
+						  	
+						  	newProjectCode = preConfigCode+Configuration+postConfigCode;
+
+							project.code = newProjectCode;
+							project.save();
+						}
+					});
+				}
+
 				experiment.update({ code: req.body.code }, function() {
 					res.redirect('/experiment/'+req.params.experimentId);
 				});
@@ -249,7 +277,7 @@ module.exports = function(io) {
 			else {
 				testbed.experiments.send(
 					experiment.experimentId, 
-					experiment.nodeUrns.split(","), 
+					experiment.nodeUrns, 
 					req.body.message, 
 					function(result) {
 						res.send();
@@ -282,6 +310,58 @@ module.exports = function(io) {
 			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
 			event.ticket = event.ascii.substr(1,32);
 			event.ascii = event.ascii.substr(33);
+
+			var params = event.ascii.split("/");
+
+			if(params[0] == "receive") {
+				event.callback = "receive";
+				event.from = params[1];
+				event.to = params[2];
+				event.lqi = params[3];
+				event.clock = params[4];
+
+				var message = event.ascii.substr(0, event.ascii.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+
+				event.payload = message;
+			}
+			else if(params[0] == "broadcast") {
+				event.callback = "broadcast";
+				event.clock = params[1];
+				event.from = params[2];
+
+				var message = event.ascii.substr(0, event.ascii.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+					message = message.substr(0, message.indexOf("/")+1);
+
+				event.payload = message;
+			}
+			else if(params[0] == "alert") {
+				event.callback = "alert";
+				event.payload = event.ascii.substr(0, event.ascii.indexOf("/")+1);		
+			}
+			else if(params[0] == "ledstate") {
+				event.callback = "getLed";
+				event.state = (params[1] == "true");		
+			}
+			else if(params[0] == "switchstate") {
+				event.callback = "switchLed";
+				event.payload = params[1];
+
+			}
+			else if(params[0] == "temp") {
+				event.callback ="temp";
+				event.temperature = parseInt(params[1]); 				
+			}
+			else if(params[0] == "light") {
+				event.callback ="light";
+				event.light = parseInt(params[1]); 
+			}
+
+
 			io.broadcast('incommingMessage', {message : event});
 		}
 	}

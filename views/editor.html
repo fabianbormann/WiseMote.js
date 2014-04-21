@@ -1,0 +1,37 @@
+{% extends 'layout.html' %}
+{% block head %}
+<link rel="stylesheet" href="/css/codemirror.css">
+<style type="text/css">
+    .ui.page.grid {padding: 0  3% !important; margin: 0;}
+</style>
+{% parent %}
+<script src="/js/codemirror.js"></script>
+<script src="/js/mode/css.js"></script>
+<script src="/js/mode/xml.js"></script>
+<script src="/js/mode/javascript.js"></script>
+<script src="/js/mode/htmlmixed.js"></script>
+<script type="text/javascript">
+	$( document ).ready(function() {
+		var delay;
+		var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+			mode: 'text/html',
+			tabMode: 'indent'
+		});
+	});
+</script>
+{% endblock %}
+{% block content %}
+<div class="sixteen wide column">
+	<div class="ui yellow message">
+		Experiment is not running.
+	</div>
+	<h1><i class="big code icon"></i>{{ experiment.name }}</h1>
+	<div class="ui divider"></div>
+</div>
+<div class="sixteen wide column">
+	<label>Project code:</label>
+	<div class="field">
+		<textarea id="code" name="code">{{ experiment.code }}</textarea>
+	</div>    
+</div>
+{% endblock %}

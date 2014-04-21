@@ -30,9 +30,25 @@ var JsMote = (function() {
 
 	io.on('incommingMessage', function(data) {
     	var callback = tickets.get(data.message.ticket);
-		
-		if(typeof callback == 'function'){
-    		callback(data.message.ascii);
+		if(typeof callback == 'function') {
+			if(data.message.callback == "alert") {
+				callback(data.message.sourceNodeUrn, data.message.payload);
+			}
+			else if(data.message.callback == "receive") {
+				callback(data.message.sourceNodeUrn, data.message.payload, data.message.from, data.message.to, data.message.lqi, data.message.clock);
+			}
+			else if(data.message.callback == "getLed") {
+				callback(data.message.sourceNodeUrn, data.message.state);
+			}
+			else if(data.message.callback == "switchLed") {
+				callback(data.message.sourceNodeUrn, data.message.payload);
+			}	
+			else if(data.message.callback == "temp") {
+				callback(data.message.sourceNodeUrn, data.message.temperature);
+			}		
+			else if(data.message.callback == "light") {
+				callback(data.message.sourceNodeUrn, data.message.light);
+			}				
 		}    	
 	});
 
@@ -149,6 +165,11 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
 		};
 
+		/**
+		* Get the Led state (Boolean) of a wisebed node
+		* 
+		* @param callback {function} optional callback function for response
+		*/
 		this.getLedState = function(callback) {
 			switch(arguments.length) {
 		        case 0: callback = this.receive;
@@ -165,9 +186,16 @@ var JsMote = (function() {
 			sendMessage(function_type+delimiter+hexTicketId+delimiter);	    	
 		}
 
-		this.receive = function(message) {
-			alert(message);
-		};
+		/**
+		* Default callback function for response (alert arguments)
+		*/
+		this.receive = function(argument1, argument2, argument3, argument4, argument5, argument6) {
+			response = "";
+			for(var i = 0; i < arguments.length; i++) {
+				response += arguments[i]+" ";
+			}
+			alert(response);
+		}
 
 		function getTicketId(functionElements) {
 			var time = Date.prototype.getTime();

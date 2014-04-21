@@ -16,23 +16,23 @@ var experimentSchema = mongoose.Schema({
         default: Date.now 
     },
     nodeUrns: {
-        type:String
+        type: [String]
     },
     name: {
-        type:String
+        type: String
     },
     console: {
-        type:String
+        type: String
     },
     experimentId : {
-        type:String
+        type: String
     },
     flashed : {
-        type:Boolean,
+        type: Boolean,
         default: false
     },
     code : {
-        type:String
+        type: String
     }
 });
 

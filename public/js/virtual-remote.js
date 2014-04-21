@@ -3,14 +3,15 @@ var JsMote = (function() {
 	var virtualNodes = [];
 
 	function VirtualNode () {
-		var id = "0x0000";
+		var id = "urn:virtual:uzl:0x0000";
 		var ledState = false;
 		var temperature = 20;
 		var light = 55;
 		var delay = 1000; 
+		var metric = Math.floor(Math.random() * 200)+1
 
 		this.configure = function(config) {
-			id = config.id;
+			id = "urn:virtual:uzl:"+config.id;
 			ledState = config.led;
 			temperature = config.temperature;
 			light = config.light;
@@ -25,35 +26,53 @@ var JsMote = (function() {
 			return delay;
 		}
 
-		this.receiveRadioMessage = function(from, message, metrics) {
-			setTimeout(function(){ alert(id+': received Message "'+message+'" from '+from) }, metrics);
+		this.receiveRadioMessage = function(from, message, callback, radioDelay) {
+			setTimeout(function(){ 
+				callback(id, message ,from.split(":")[3], id.split(":")[3], (metric+Math.floor(Math.random() * 20)+1), (Math.floor(Math.random() * 1000)+1)); 
+			}, radioDelay);
 		}
 
 		this.request = function(message) {
+			var result = {};
 			switch(message.task) {
 				case 0:
+					result.callback = "switchLed";
+					if(ledState == message.params && message.params == true) {
+						result.payload = "already on";
+					}
+					else if(ledState == message.params && message.params == false) {
+						result.payload = "already off"
+					}
+					else if(message.params == false) {
+						result.payload = "turned off"
+					}
+					else if(message.params == true) {
+						result.payload = "turned on"
+					}
 					ledState = message.params;
 					response({
-						content : message.params,
+						content : result,
 						callback : message.callback
 					});
 					break;
 				case 1:
+					result.callback = "alert";
+					result.payload =  message.params;
 					response({
-						content : message.params,
+						content : result,
 						callback : message.callback
 					});
 					break;
 				case 2:
-					var result;
+					result.callback = "sensor";
 					if(message.params == "light") {
-						result = light;
+						result.light = light;
 					}
 					else if(message.params == "temperature") {
-						result = temperature;
+						result.temperature = temperature;
 					}
 					else {
-						result = "error: unknown sensor "+message.params 
+						throw new Error("Unknown sensor "+message.params)
 					}
 					response({
 						content : result,
@@ -61,8 +80,10 @@ var JsMote = (function() {
 					});
 					break;
 				case 3:
+					result.callback = "getLed";
+					result.state = ledState;
 					response({
-						content : "broadcasting: "+message.params,
+						content : result,
 						callback : message.callback
 					});
 					break;
@@ -71,7 +92,22 @@ var JsMote = (function() {
 		}
 
 		function response (message) {
-			setTimeout(function(){ message.callback(id+":"+message.content) }, delay);
+			setTimeout(function() { 
+
+				if (message.content.callback == "getLed") {
+					message.callback(id, message.content.state);
+				}
+				else if (message.content.callback == "sensor") {
+					message.callback(id, message.content.light ? message.content.light : message.content.temperature);
+				}
+				else if (message.content.callback == "alert") {
+					message.callback(id, message.content.payload);
+				}
+				else if (message.content.callback == "switchLed") {
+					message.callback(id, message.content.payload);
+				}
+			}, 
+			delay);
 		}
 	};
 
@@ -149,18 +185,19 @@ var JsMote = (function() {
 	    	}
 
 			var message = {
-				task : 3,
 				params : message,
 				callback : callback
 			};
 
 			$.each(virtualNodes, function(index, virtualNode) {
-				virtualNode.request(message);
-
 				$.each(virtualNodes, function(broadcastIndex, otherNode) {
-					if(virtualNode.getId() != otherNode.getId())
-						otherNode.receiveRadioMessage(virtualNode.getId(), message.params, virtualNode.getDelay()+200);
-				})
+					if(virtualNode.getId() != otherNode.getId()) {
+						//Try to simulate broken message probability 
+						if((Math.random()*100) < 80) {
+							otherNode.receiveRadioMessage(virtualNode.getId(), message.params, message.callback, virtualNode.getDelay()+200);
+						}
+					}
+				});
 			});
 		};
 
@@ -190,12 +227,34 @@ var JsMote = (function() {
 		};
 
 		/**
-		* Default callback function for response
-		*
-		* @param text {String, Number, bool} will be used for alert
+		* Returns the Led state
 		*/
-		this.receive = function(text) {
-			alert(text);
+		this.getLedState  = function(callback){
+			switch(arguments.length) {
+		        case 0: callback = this.receive;
+		        case 1: break;
+		        default: throw new Error('Illegal argument count!')
+	    	}
+			
+			var message = {
+				task : 3,
+				callback : callback
+			};
+
+			$.each(virtualNodes, function(index, virtualNode) {
+				virtualNode.request(message);
+			});
+		};
+
+		/**
+		* Default callback function for response (alert arguments)
+		*/
+		this.receive = function(argument1, argument2, argument3, argument4, argument5, argument6) {
+			response = "";
+			for(var i = 0; i < arguments.length; i++) {
+				response += arguments[i]+" ";
+			}
+			alert(response);
 		}
 	}
     return remote;

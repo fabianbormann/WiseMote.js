@@ -1,0 +1,37 @@
+<html>
+<head>
+<style>
+  body {font-family: 'Open Sans', sans-serif;}
+</style>
+<!-- Configuration: Please do not remove -->
+<script src="/js/jquery-1.9.1.js"></script>
+<script src="/js/virtual-remote.js"></script>
+<script type="text/javascript">  
+  jsMote = new JsMote();
+  
+  jsMote.addNode({
+    id : "0x0001",
+    led : false,
+    light : 44,
+    temperature : 22,
+    delay : 500
+  });
+</script>
+<!-- End of Configuration -->
+<script type="text/javascript">
+    function turnLedOn() {
+      jsMote.switchLed(true);
+    }
+    
+    function turnLedOff() {
+      jsMote.switchLed(false);
+    }
+  </script>
+</head>
+<body>
+  <h1>Empty Project</h1>
+  <p>Welcome to your new empty project.</p>
+  <button onclick="turnLedOn();">Led on</button><br>
+  <button onclick="turnLedOff();">Led off</button>
+</body>
+</html>

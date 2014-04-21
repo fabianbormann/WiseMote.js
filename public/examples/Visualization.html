@@ -25,6 +25,22 @@
     temperature : 29,
     delay : 300
   });
+
+  jsMote.addNode({
+    id : "0x0003",
+    led : false,
+    light : 144,
+    temperature : 21,
+    delay : 550
+  });
+
+  jsMote.addNode({
+    id : "0x0004",
+    led : false,
+    light : 245,
+    temperature : 33,
+    delay : 200
+  });
 </script>
 <!-- End of Configuration -->
 <script type="text/javascript">   
@@ -38,39 +54,59 @@
     this.x;
     this.y;
 
+    this.led = false;
+
     var self = this;
 
     this.setPosition = function(x,y)  {
       this.x = x;
       this.y = y;
-      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id);
+      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id, this.led ? "#F3F781" : "#181907");
     }
 
     this.toggleSelection = function() {
       this.selected = this.selected ? false : true;
-      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id);
+      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id, this.led ? "#F3F781" : "#181907");
+    }
+
+    this.changeLed = function(state) {
+      this.led = state;
+      drawNode(this.x,this.y, this.selected ? "#0FFF88" : "#FF8888", this.id, this.led ? "#F3F781" : "#181907");
     }
 
     return function() {
-      Nodes.push(self);
-      arrangeNodes();
+      var unique = true;
+      $.each(Nodes, function(index, node) {
+        if(node.id == id)
+          unique = false;
+      });
+      if(!unique) {
+        throw new Error("Node id is already in Array. Node id must be unique!")
+      }
+      else {
+        Nodes.push(self);
+        arrangeNodes();
+      }
     }()
   }
 
-  function drawNode(x, y, color, id) {
+  function drawNode(x, y, color, id, led) {
     var context = $("#visualization")[0].getContext('2d');
     context.fillStyle = color;
     context.fillRect(x,y,50,50);
+
+    context.fillStyle = led;
+    context.fillRect(x+5,y+5,5,5);
 
     context.fillStyle = "#000000";
     context.font = "10px Arial";
     context.fillText(id, x+5, y+25);
   }
 
-  function drawMessage(from, to, label, status) {
+  function drawMessage(from, to, label) {
     var context = $("#visualization")[0].getContext('2d');
-    context.strokeStyle="red";
-    context.fillStyle="red";
+    context.strokeStyle="black";
+    context.fillStyle="black";
     context.lineWidth=1;
     
     context.beginPath();
@@ -100,6 +136,19 @@
     context.fillText(label, (from.x+to.x)/2+5, (from.y+to.y)/2+12.5);    
   }
 
+  function drawBrokenMessage(from, to) {
+    var context = $("#visualization")[0].getContext('2d');
+    context.strokeStyle="black";
+    context.fillStyle="black";
+    context.lineWidth=1;
+    
+    context.beginPath();
+    context.moveTo(from.x+25,from.y+25);
+    context.lineTo((from.x+to.x)/2+25,(from.y+to.y)/2+25);
+    context.stroke(); 
+    context.save();
+  }
+
   function arrangeNodes() {
     var context = $("#visualization")[0].getContext('2d');
     context.clearRect(0,0,$("#visualization").width(),$("#visualization").height());
@@ -119,12 +168,17 @@
     }
   }
 
+  function getNodeById(id) {
+    for(var node = 0; node < Nodes.length; node++) {
+      if(Nodes[node].id == id)
+        return node;
+    }
+  }
+
   $( document ).ready(function() {
     $('#visualization').click(function(event) {
       var x = parseInt (event.pageX) - ( parseInt ($("#visualization").offset().left) );
       var y = parseInt (event.pageY) - ( parseInt ($("#visualization").offset().top)) ;
-
-      console.log("click @ "+x+" "+y);
 
       for (var i = 0; i < Nodes.length; i++){
         if(x > Nodes[i].x && x < Nodes[i].x+50 && y > Nodes[i].y && y < Nodes[i].y+50) {
@@ -133,14 +187,46 @@
       }   
     });
 
-    jsMote.alert("test", function(message) {
-      new Node(message.split(":")[0]);
+    jsMote.alert("find", function(id, message) {
+      new Node(id.split(":")[3]);
     });
   });
 
   function broadcast() {
-    jsMote.broadcast("Hello World", function(message) {
+    arrangeNodes();
 
+    $.each(Nodes, function(index, node) {
+      if(node.selected) {
+        otherNodes = Nodes.slice(0);
+        otherNodes.splice( index, 1 );
+        $.each(otherNodes, function(otherNodeIndex, otherNode) {
+          drawBrokenMessage(node, otherNode);
+        });
+      }
+    });
+
+    jsMote.broadcast("Hello World", function(id, message, from, to, metric, clock) {
+        if(Nodes[getNodeById(from)].selected) {
+          drawMessage(Nodes[getNodeById(from)], Nodes[getNodeById(to)], clock+"  "+metric);
+        }
+    });
+  }
+
+  function ledOn() {
+    arrangeNodes();
+    jsMote.switchLed(true, function(id, message) {
+      if(message == "turned on") {
+        Nodes[getNodeById(id.split(":")[3])].changeLed(true);
+      }
+    });
+  }
+
+  function ledOff() {
+    arrangeNodes();
+    jsMote.switchLed(false, function(id, message) {
+      if(message == "turned off") {
+        Nodes[getNodeById(id.split(":")[3])].changeLed(false);
+      }
     });
   }
 </script>
@@ -149,8 +235,8 @@
   <h1>Visualization</h1>
   <canvas id="visualization" width="800" height="600"></canvas>
   <br>
-  <button>Led On</button>
-  <button>Led Off</button>
-  <button>Broadcast "Hello World"</button>
+  <button onclick="ledOn()">Led On</button>
+  <button onclick="ledOff()">Led Off</button>
+  <button onclick="broadcast();">Broadcast "Hello World"</button>
 </body>
 </html>

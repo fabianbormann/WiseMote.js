@@ -17,12 +17,12 @@ exports.getPage = function(req, res) {
 	        	throw err;
 	        }
 	        else {
-                Project.find({ _id : { $in : JSON.parse(user.projects) } }, function (err, projects) {
+                Project.find({ _id : { $in : user.projects } }, function (err, projects) {
                     if(err) {
                         throw err;
                     }
                     else {
-                        Experiment.find({ _id : { $in : JSON.parse(user.experiments) } }, function (err, experiments) {
+                        Experiment.find({ _id : { $in : user.experiments } }, function (err, experiments) {
                             if(err) {
                                 throw err;
                             }
@@ -89,60 +89,49 @@ exports.newProject = function(req, res) {
             throw err;
         }
         else {
-            var project = new Project({ 
-                name: req.body.projectName,
-                members: JSON.stringify([req.session.email])        
-            });
-
-            project.save(function(err, emptyProject) {
-                if (err) 
+            fs.readFile('./public/templates/project.html', function (err, code) {
+                if(err) {
                     throw err;
-                else {
-                    var projects = JSON.parse(user.projects);
-                    projects.push(emptyProject._id);
-                    user.update( {projects : JSON.stringify(projects)}, function () {
-                        res.redirect('/workspace');  
-                    });
                 }
-            });  
+                else {
+                    var project = new Project({ 
+                        name : req.body.projectName,
+                        members : new Array(req.session.email),
+                        code : code.toString()
+                    });
+                    project.save(function(err, emptyProject) {
+                        if (err) 
+                            throw err;
+                        else {
+                            var projects = user.projects;
+                            projects.push(emptyProject._id);
+                            user.update( {projects : projects}, function () {
+                                res.redirect('/workspace');  
+                            });
+                        }
+                    });  
+                }
+            });
         }
     });
 }
 
 exports.showProject = function(req, res) {
-    User.findOne({'email': req.session.email}, function(err, user) {
+    User.findOne( { 'email': req.session.email }, function(err, user) {
         if(err) {
             throw err;
         }
         else {
             if(user) { 
-                Array.prototype.contains = function(k, callback) {
-                    var self = this;
-                    return (function check(i) {
-                        if (i >= self.length) {
-                            return callback(false);
-                        }
-
-                        if (self[i] === k) {
-                            return callback(true);
-                        }
-
-                        return process.nextTick(check.bind(null, i+1));
-                    }(0));
-                }
-
-                var projects = JSON.parse(user.projects);
-
-                Project.findOne( {_id : req.params.projectId}, function(err, project) {
-                    projects.contains(project._id.toString(), function(pass) {
-                        if (pass) {
-                            res.render('project', {
-                                project : project
-                            });
-                        } else {
-                            res.redirect('/home');
-                        }
-                    });
+                Project.findOne( { _id : req.params.projectId }, function(err, project) {
+                    if( user.projects.indexOf(project._id.toString()) > -1 ) {
+                        res.render('project', {
+                            project : project
+                        });
+                    }
+                    else {
+                        res.redirect('/home');
+                    }
                 }); 
             }
             else {
@@ -153,36 +142,28 @@ exports.showProject = function(req, res) {
 }
 
 exports.saveProject = function(req, res) {
-    Project.find( {_id : req.params.projectId}, function(err, dbProject) {
-        dbProject[0].update( {code : req.body.code}, function () {
+    Project.findOne( {_id : req.params.projectId }, function(err, project) {
+        project.update( {code : req.body.code}, function () {
             res.redirect('/project/'+req.params.projectId);  
         });
     });
 }
 
 exports.saveProjectConfiguration = function (req, res) {
-    var virtualNodeOption = false;
-    /*if(req.body.virtualNodeOption == "on")
-        virtualNodeOption = true;
-    else
-        virtualNodeOption = false;*/
-
     Project.findOne( {_id : req.params.projectId }, function(err, project) {
         if(err) {
             throw err;
         }
         else {
             project.update({
-                name : req.body.projectName,
-                virtualNodeInExperiment : virtualNodeOption
+                name : req.body.projectName
             }, function(err, updatedProject) {
                 if(err) {
                     throw err;
                 }
                 else {
                     res.send({
-                        newName : req.body.projectName, 
-                        option : virtualNodeOption
+                        newName : req.body.projectName
                     });
                 }
             });
@@ -191,12 +172,12 @@ exports.saveProjectConfiguration = function (req, res) {
 }
 
 exports.addProjectMember = function(req, res) {
-    Project.findOne( {_id : req.params.projectId }, function (err, project) {
+    Project.findOne( { _id : req.params.projectId }, function (err, project) {
         if(err) {
             throw err;
         }
         else {
-            User.findOne( {email : req.body.userMail }, function (err, user) {
+            User.findOne( { email : req.body.userMail }, function (err, user) {
                 if(err) {
                     throw err;
                 }
@@ -205,23 +186,23 @@ exports.addProjectMember = function(req, res) {
                         res.send({type : "error", content : "User not found! Please check the email adress and try again."});
                     }
                     else {
-                        var userProjects = JSON.parse(user.projects);
+                        var userProjects = user.projects;
                         
                         if(userProjects.indexOf(req.params.projectId) == -1) {
                             userProjects.push(req.params.projectId);
 
                             user.update({
-                                projects : JSON.stringify(userProjects)
+                                projects : userProjects
                             },
                             function(err, updatedUser) {
                                 if(err) {
                                     res.send({type : "error", content : "Database error! Please try again later."});
                                 }
                                 else {
-                                    projectMembers = JSON.parse(project.members);
+                                    projectMembers = project.members;
                                     projectMembers.push(user.email);
                                     project.update({
-                                        members : JSON.stringify(projectMembers)                                        
+                                        members : projectMembers                                        
                                     }, function(err, updatedProject) {
                                         if(err) {
                                             res.send({type : "error", content : "Database error! Please try again later."});
@@ -244,6 +225,37 @@ exports.addProjectMember = function(req, res) {
     });
 }
 
+exports.removeProject = function(req, res) {
+    Project.findOne( { _id : req.params.projectId }, function (err, project) {
+        if(err) {
+            throw err;
+        }
+        else {;
+            if(project.members.indexOf( req.session.email ) > -1) {
+                project.members.splice(project.members.indexOf( req.session.email ), 1);
+                if(project.members.length == 0) {
+                    User.findOne( { email : req.session.email }, function (err, user) {
+                        user.projects.splice(user.projects.indexOf( req.params.projectId ), 1);
+                        project.remove();
+                        user.save(function() {
+                            res.redirect('/workspace');
+                        });
+                    });
+                }
+                else {
+                    User.findOne( {email : req.session.email }, function (err, user) {
+                        user.projects.splice(user.projects.indexOf( req.params.projectId ), 1);
+                        user.save(function() {
+                            project.save(function() {
+                                res.redirect('/workspace');
+                            });
+                        });
+                    });
+                }
+            }
+        }
+    });
+}
 
 exports.showExample = function (req, res) {
     fs.readFile('./public/examples/'+req.params.name+'.html', function (err, example) {
@@ -264,24 +276,24 @@ exports.cloneExample = function (req, res) {
             throw err;
         }
         else {
-            Example.findOne({ _id : req.params.exampleId }, function (err, example) {
+            fs.readFile('./public/examples/'+req.params.name+'.html', function (err, example) {
                 if(err) {
                     throw err;
                 }
                 else {
                     project = new Project({
-                        code: example.code,
-                        name: example.name,
-                        members: JSON.stringify([user.email])          
+                        code: example.toString(),
+                        name: req.params.name,
+                        members: new Array(user.email)         
                     });
 
                     project.save(function(err, newProject) {
                         if (err) 
                             throw err;
                         else {
-                            var projects = JSON.parse(user.projects);
+                            var projects = user.projects;
                             projects.push(newProject._id);
-                            user.update( {projects : JSON.stringify(projects)}, function () {
+                            user.update( {projects : projects}, function () {
                                 res.redirect('/workspace');  
                             });
                         }
@@ -289,5 +301,18 @@ exports.cloneExample = function (req, res) {
                 }
             });  
         }    
+    });
+}
+
+exports.viewCode = function(req, res) {
+    Experiment.findOne({ _id : req.params.experimentId }, function(err, experiment) {
+        if(err) {
+            throw err;
+        }
+        else {
+            res.render('editor', {
+                experiment : experiment
+            });
+        }
     });
 }

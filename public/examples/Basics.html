@@ -13,7 +13,7 @@
     id : "0x0001",
     led : false,
     light : 44,
-    temperature : 22,
+    temperature : 18,
     delay : 500
   });
   
@@ -35,6 +35,10 @@
       jsMote.switchLed(false);
     }
     
+    function getLedState() {
+      jsMote.getLedState();  
+    }
+
     function alertMessage() {
       var text = document.getElementById("myAlertMessage").value;
       jsMote.alert(text);   
@@ -54,12 +58,22 @@
     }
     
     function callbackExample() {
-      jsMote.getSensorValue("temperature", function(value) {
+      jsMote.getSensorValue("temperature", function(source_id, value) {
         if(value > 20) {
-          jsMote.broadcast("It's warm today. "+value+unescape("%B0C"));
+          jsMote.broadcast("It's warm today. "+value+" degrees Celsius..",
+            function(id, message, from, to, metric, clock) {
+              if(source_id != id) {
+                alert(to+": "+from+" send "+message+" at "+clock+"ms of my internal clock.");
+              }
+            });
         }
         else {
-          jsMote.broadcast("Turn up the heating! "+value+unescape("%B0C"));
+          jsMote.broadcast("Turn up the heating! Only "+value+" degrees Celsius!",
+            function(id, message, from, to, metric, clock) {
+              if(source_id != id) {
+                alert(to+": "+from+" send "+message+" at "+clock+"ms of my internal clock.");
+              }
+          });
         }
       })
     }
@@ -69,7 +83,8 @@
   <h1>Basics</h1>
   <p>Click on these buttons below to change the led state.</p>
   <button onclick="turnLedOn();">Led on</button><br>
-  <button onclick="turnLedOff();">Led off</button>
+  <button onclick="turnLedOff();">Led off</button><br>
+    <button onclick="getLedState();">Check Led state</button>
   <p>Let the wisebed node alert a message:</p>
   <input type="text" id="myAlertMessage">
   <button onclick="alertMessage();">alert</button>

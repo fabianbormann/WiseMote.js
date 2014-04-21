@@ -12,10 +12,6 @@
 <script src="/js/mode/javascript.js"></script>
 <script src="/js/mode/htmlmixed.js"></script>
 <script type="text/javascript">
-	var l = window.location;
-	var wisebedWebSocketBaseUrl = 'ws://' + l.host;
-	var wisebedBaseUrl = l.protocol + '//' + l.host;
-
 	function displayMessage(type, message) {
 		$(' #configMessage > .header').text(message);
 		$(' #configMessage ').removeClass( "error success" ).addClass( type );
@@ -45,14 +41,6 @@
 
         $('.ui.checkbox').checkbox();
 
-        /*$('#virtualNodeOption').change(function() {
-		   if($(this).is(":checked")) {
-		      $('#useVirtualNode > label').text("No");
-		      return;
-		   }
-		   $('#useVirtualNode > label').text("Yes");
-		});*/
-
         $('#nodeConfig').click(function() {
             $('.virtualNode.modal')
             .modal('setting', {
@@ -70,6 +58,11 @@
 			     	});
 			    }
 			 })
+            .modal('show');
+        });
+
+        $('#deleteProject').click(function() {
+        	$('.removeProject.modal')
             .modal('show');
         });
 
@@ -103,6 +96,20 @@
 {% endblock %}
 
 {% block content %}
+<div class="ui removeProject modal">
+  	<i class="circular inverted red close icon"></i>
+  	<div class="header">
+    	Remove {{ project.name }} from your workspace
+  	</div>
+  	<div class="content">
+   		If you are <b>sure</b> that you want to <b>remove "{{ project.name }}"</b> from
+   		your workspace, click on the remove button below. 
+ 	</div>
+  <div class="actions">
+    <div class="ui green button">Cancel</div>
+    <a class="ui red button" href="/remove/project/{{ project._id.toString() }}">Remove</a>
+  </div>
+</div>
 <div class="ui virtualNode modal">
     <i class="circular inverted red close icon"></i>
     <div class="header">
@@ -121,23 +128,9 @@
 		  	</div>
 		</div>
 		<div class="ui divider"></div>
-    <!--<table id="projectOptions">
-	    <tr>
-	    <td><label>Use virtual node additional in real enviroment</label></td>
-	    <td><div id="useVirtualNode" class="ui toggle checkbox">
-	    	{% if project.virtualNodeInExperiment %}
-	  		<input type="checkbox" name="virtualNodeOption" id="virtualNodeOption">
-	  		<label for="virtualNodeOption">No</label>
-	  		{% else %}
-	  		<input type="checkbox" name="virtualNodeOption" id="virtualNodeOption" checked="checked">
-	  		<label for="virtualNodeOption">Yes</label>
-	  		{% endif %}
-		</div></td>
-		</tr> 
-		</table>-->
 		</form>
 		<h2>Members</h2>
-		{% for member in JSON.parse(project.members) %}
+		{% for member in project.members %}
 			<p>{{ member }}</p>
 		{% endfor %}
 		<div class="ui divider"></div>
@@ -178,12 +171,16 @@
 		<i class="wrench icon"></i>
   		Configuration
 	</button>
+	<button id="deleteProject" class="ui black button">
+		<i class="trash icon"></i>
+		Remove from workspace
+	</button>
 </div>
 <div class="eight wide column">
 	<div class="right floated ui buttons">
 		<button class="ui blue button" id="saveButton">Save</button>
 	<div class="or"></div>
-	<button class="ui green button">Start experiment</button>
+	<a href="/workspace" class="ui green button">Start experiment</a>
 	</div>
 </div>
 <div class="sixteen wide column">

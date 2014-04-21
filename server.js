@@ -39,8 +39,10 @@ app.get('/home', home.welcome)
 app.get('/testbed/nodes', testbed.getNodes);
 app.get('/experiment/:experimentId', testbed.showExperiment);
 app.get('/show/example/:name', workspace.showExample);
-app.get('/example/:exampleId/clone', workspace.cloneExample);
+app.get('/example/:name/clone', workspace.cloneExample);
 app.get('/list/examples', home.getExamples);
+app.get('/remove/project/:projectId', workspace.removeProject);
+app.get('/experiment/view/code/:experimentId', workspace.viewCode);
 
 app.post('/new/project', workspace.newProject);
 app.post('/project/:projectId/save', workspace.saveProject);

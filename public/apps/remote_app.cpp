@@ -62,8 +62,6 @@ public:
 		radio_->reg_recv_callback<RemoteApplication, &RemoteApplication::receive_radio_message> (this);
 
 		uart_->enable_serial_comm();
-		Uart::block_data_t x[] = "123456789:\n";
-		uart_->write(sizeof(x) - 1, x);
 
 		uart_->reg_read_callback<RemoteApplication,
 				&RemoteApplication::receive_packet> (this);
@@ -127,19 +125,16 @@ public:
 
 	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len, Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
 		char * ticket_id;
-		char * timestamp;
 		char * payload;
 
 		char msg[len];
 		sprintf(msg, "%s", buf);
 
 		ticket_id = strtok(msg, "/");
-		timestamp = strtok(NULL, "/");
 		payload = strtok(NULL, "/");
 
 		char response[512];
-		uint16 n = snprintf((char*)response, 511,"%s%x/%x/%d/%d/%d/%s", ticket_id, from, radio_->id(), ext.link_metric(), timestamp,
-				clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), payload);
+		uint16 n = snprintf((char*)response, 511,"%sreceive/%x/%x/%d/%d/%s", ticket_id, from, radio_->id(), ext.link_metric(), clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), payload);
 		response[n] = '\0';
 
 		reply(response);
@@ -150,12 +145,12 @@ public:
 		size_t ticket_id_len = strlen(ticket_id);
 		size_t id_len = strlen(reinterpret_cast<char*>(radio_->id()));
 		size_t response_len = message_len+ticket_id_len+id_len;
-		char response[17+response_len];
-		sprintf(response, "%s%d/%x/%s", ticket_id, clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), radio_->id(), message);
+		char response[32+response_len];
+		sprintf(response, "%sbroadcast/%d/%x/%s", ticket_id, clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), radio_->id(), message);
 		reply(response);
 
 		radio_block_data_t buffer_[512];
-		radio_size_t n = snprintf((char*)buffer_, 511, "%s/%d/%s", ticket_id, clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), message);
+		radio_size_t n = snprintf((char*)buffer_, 511, "%s/%s", ticket_id, message);
 		buffer_[n] = '\0';
 		radio_size_t buffer_size_ = n + 1;
 
@@ -167,14 +162,15 @@ public:
 		size_t id_len = strlen(ticket_id)+1;
 		size_t response_len = id_len+msg_len;
 
-		char* response = strncat(ticket_id, message, response_len);
+		char response[32+response_len];
+		sprintf(response, "%salert/%s", ticket_id, message);
 
 		reply(response);
 	}
 
 	void getLedState(char* ticket_id) {
 		char buffer_[64];
-		size_t n = snprintf((char*)buffer_, 63, "%s%s", ticket_id, led_state ? "true" : "false");
+		size_t n = snprintf((char*)buffer_, 63, "%sledstate/%s", ticket_id, led_state ? "true" : "false");
 		buffer_[n] = '\0';
 
 		reply(buffer_);
@@ -206,7 +202,7 @@ public:
 		}
 
 		char buffer_[512];
-		uint16 n = snprintf((char*)buffer_, 511, "%s%s", ticket_id, message);
+		uint16 n = snprintf((char*)buffer_, 511, "%sswitchstate/%s", ticket_id, message);
 		buffer_[n] = '\0';
 
 		reply(buffer_);
@@ -236,8 +232,8 @@ public:
     void get_temp(char* ticket_id) {
     	int8_t temp = em_->temp_sensor()->temperature();;
 
-    	char response[36];
-		sprintf(response, "%s%i", ticket_id, temp);
+    	char response[64];
+		sprintf(response, "%stemp/%i", ticket_id, temp);
 
 		reply(response);
     }
@@ -245,8 +241,8 @@ public:
     void get_light(char* ticket_id) {
     	uint32_t light = em_->light_sensor()->luminance();
 
-    	char response[42];
-    	sprintf(response, "%s%i", ticket_id, light);
+    	char response[64];
+    	sprintf(response, "%slight/%i", ticket_id, light);
 
 		reply(response);
     }

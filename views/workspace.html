@@ -299,7 +299,6 @@
                 <th>#</th>
                 <th>Name</th>
                 <th>Members</th>
-                <th>Time</th>
             </tr>
         </thead>
         <tbody>
@@ -308,16 +307,19 @@
             <tr class="clickable" onclick="document.location = '/project/{{ project._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ project.name }}</td>
-                <td>{% for member in JSON.parse(project.members) %}
-               {{ member }}, 
-                {% endfor %}
+                <td>{% for member in project.members %}
+                        {% if loop.first %}
+                            {{ member }}
+                        {% else %}
+                            <br>{{ member }}
+                        {% endif %}
+                    {% endfor %}
                 </td>
-                <td>{{ project.date.toString() }}</td>
             </tr>
             {% endfor %}
             {% else %}
             <tr class="warning">
-                <td colspan="4">You don't have any projects yet.</td>
+                <td colspan="3">You don't have any projects yet.</td>
             </tr>
             {% endif %}
         </tbody>
@@ -420,10 +422,29 @@
         </thead>
         <tbody>
             {% for experiment in futureExperiments %}
-            <tr class="positive">
+            <tr class="positive clickable" onclick="document.location = '/experiment/view/code/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
-                <td>{{ experiment.nodeUrns }}</td>
+                <td id="{{ experiment._id.toString() }}">
+                    {% if experiment.nodeUrns.length > 2 %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}<div style="text-align:center"><i class="ellipsis vertical icon"></i></div>
+                            {% else %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </td>
                 <td>{{ experiment.from.getHours() }}:
                     {% if experiment.from.getMinutes() > 10 %}
                         {{ experiment.from.getMinutes() }}
@@ -441,6 +462,14 @@
                     {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
                 </td>
             </tr>
+            <script type="text/javascript">
+                var popupNodes = "{% for node in experiment.nodeUrns %}{{ node.replace("urn:wisebed:uzl1:", "") }}<br> {% endfor %}"; 
+                $('#{{ experiment._id.toString() }}')
+                  .popup({
+                    content: popupNodes
+                  })
+                ;   
+            </script>
             {% endfor %}            
         </tbody>
         <tfoot>
@@ -464,12 +493,26 @@
             <tr class="clickable" onclick="document.location = '/experiment/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
-                {% if experiment.nodeUrns.length > 30 %}
-                    <td id="{{ experiment._id.toString() }}">{{ experiment.nodeUrns.substr(0,30) }}...</td>
-                {% else %}
-                    <td id="{{ experiment._id.toString() }}">{{ experiment.nodeUrns }}</td>
-                {% endif %}
-                
+                <td id="{{ experiment._id.toString() }}">
+                    {% if experiment.nodeUrns.length > 2 %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}<div style="text-align:center"><i class="ellipsis vertical icon"></i></div>
+                            {% else %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </td>
                 <td>{{ experiment.from.getHours() }}:
                     {% if experiment.from.getMinutes() > 10 %}
                         {{ experiment.from.getMinutes() }}
@@ -488,10 +531,7 @@
                 </td>
             </tr>
             <script type="text/javascript">
-
-                var popupNodes = "{{ experiment.nodeUrns }}"; 
-                    popupNodes = popupNodes.split(",").join("\n");
-
+                var popupNodes = "{% for node in experiment.nodeUrns %}{{ node.replace("urn:wisebed:uzl1:", "") }}<br> {% endfor %}"; 
                 $('#{{ experiment._id.toString() }}')
                   .popup({
                     content: popupNodes
@@ -522,10 +562,29 @@
         </thead>
         <tbody>
             {% for experiment in pastExperiments %}
-            <tr class="warning">
+            <tr class="warning clickable" onclick="document.location = '/experiment/view/code/{{ experiment._id.toString() }}';">
                 <td>{{ loop.index }}</td>
                 <td>{{ experiment.name }}</td>
-                <td>{{ experiment.nodeUrns }}</td>
+                <td id="{{ experiment._id.toString() }}">
+                    {% if experiment.nodeUrns.length > 2 %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}<br><div style="text-align:center"><i class="ellipsis vertical icon"></i></div>
+                            {% else %}
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        {% for node in experiment.nodeUrns %}
+                            {% if loop.first %}
+                                {{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% elseif loop.index == 2 %}
+                                <br>{{ node.replace("urn:wisebed:uzl1:", "") }}
+                            {% endif %}
+                        {% endfor %}
+                    {% endif %}
+                </td>
                 <td>{{ experiment.from.getHours() }}:
                     {% if experiment.from.getMinutes() > 10 %}
                         {{ experiment.from.getMinutes() }}
@@ -543,6 +602,14 @@
                     {{ experiment.to.getMonth()+1 }}/{{ experiment.to.getDate() }}/{{ experiment.to.getFullYear() }}
                 </td>
             </tr>
+            <script type="text/javascript">
+                var popupNodes = "{% for node in experiment.nodeUrns %}{{ node.replace("urn:wisebed:uzl1:", "") }}<br> {% endfor %}"; 
+                $('#{{ experiment._id.toString() }}')
+                  .popup({
+                    content: popupNodes
+                  })
+                ;   
+            </script>
             {% endfor %}            
         </tbody>
         <tfoot>

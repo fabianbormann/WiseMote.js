@@ -12,10 +12,6 @@
 <script src="/js/mode/javascript.js"></script>
 <script src="/js/mode/htmlmixed.js"></script>
 <script type="text/javascript">
-	var l = window.location;
-	var wisebedWebSocketBaseUrl = 'ws://' + l.host;
-	var wisebedBaseUrl = l.protocol + '//' + l.host;
-
 	$( document ).ready(function() {
 		var delay;
 		var editor = CodeMirror.fromTextArea(document.getElementById("code"), {
@@ -45,7 +41,7 @@
 {% block content %}
 <div class="sixteen wide column">
 	<h1><i class="big code icon"></i>{{ example.name }}</h1>
-	<a href="/example/{{ example._id.toString() }}/clone" class="ui red button">
+	<a href="/example/{{ example.name }}/clone" class="ui red button">
 		<i class="copy icon"></i>
   		Clone Example
 	</a>
@@ -54,7 +50,6 @@
 <div class="eight wide column">
 	<label>Project code:</label>
 	<div class="field">
-		<!-- <form method="POST" action="/example/{{ example._id.toString() }}/save"> -->
 		<textarea id="code" name="code">{{ example.code }}</textarea>
 	</div>    
 </div>
@@ -64,7 +59,5 @@
 		<iframe id="preview"></iframe>
 	</div>  
 </div>
-<!-- <input type="submit" class="red ui button" value="Save">
-</form> -->
 
 {% endblock %}

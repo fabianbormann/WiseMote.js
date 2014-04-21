@@ -7,11 +7,12 @@ var userSchema = mongoose.Schema({
         unique: true
     },
     projects: {
-    	type:String
+    	type: [String],
+        default: new Array()
     },
     experiments: {
-        type:String,
-        default: JSON.stringify(new Array())
+        type: [String],
+        default: new Array()
     },
     date: { 
     	type: Date, 
