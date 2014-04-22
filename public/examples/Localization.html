@@ -1,0 +1,171 @@
+<html>
+<head>
+<style>
+  body {font-family: 'Open Sans', sans-serif;}
+    #localization {background-color: #eee}
+</style>
+<!-- Configuration: Please do not remove -->
+<script src="/js/jquery-1.9.1.js"></script>
+<script src="/js/virtual-remote.js"></script>
+<script type="text/javascript">  
+  jsMote = new JsMote();
+  
+  jsMote.addNode({
+    id : "0x0001",
+    led : false,
+    light : 44,
+    temperature : 22,
+    delay : 500
+  });
+  
+  jsMote.addNode({
+    id : "0x0002",
+    led : false,
+    light : 9,
+    temperature : 29,
+    delay : 300
+  });
+
+  jsMote.addNode({
+    id : "0x0003",
+    led : false,
+    light : 144,
+    temperature : 21,
+    delay : 550
+  });
+
+  jsMote.addNode({
+    id : "0x0004",
+    led : false,
+    light : 245,
+    temperature : 33,
+    delay : 200
+  });
+</script>
+<!-- End of Configuration -->
+<script type="text/javascript">   
+  var Nodes = []; 
+
+  function Node(id) {
+    this.id = id;
+
+    this.x;
+    this.y;
+
+    var self = this;
+
+    this.setPosition = function(x,y)  {
+      clearNode(this.x, this.y);
+      this.x = x;
+      this.y = y;
+      drawNode(this.x,this.y, this.id);
+    }
+
+    return function() {
+      var unique = true;
+      $.each(Nodes, function(index, node) {
+        if(node.id == id)
+          unique = false;
+      });
+      if(!unique) {
+        throw new Error("Node id is already in Array. Node id must be unique!")
+      }
+      else {
+        Nodes.push(self);
+        arrangeNodes();
+      }
+    }()
+  }
+
+  function drawNode(x, y, id) {
+    var context = $("#localization")[0].getContext('2d');
+    context.fillStyle = "#0FFF88";
+    context.fillRect(x,y,50,50);
+
+    context.fillStyle = "#000000";
+    context.font = "10px Arial";
+    context.fillText(id, x+5, y+25);
+  }
+
+  function clearNode(x, y) {
+    var context = $("#localization")[0].getContext('2d');
+    context.clearRect(x,y,50,50);
+  }
+
+  function calculatePosition(from, to, metric) {
+    var distance = getRelativeDistance(from, to);
+    var relativeLinkQuality = Math.sqrt(Math.pow(metric-255, 2))/255;
+    var delta = Math.sqrt(Math.pow(distance, 2)+Math.pow(relativeLinkQuality, 2))
+    if(delta < distance) {
+      console.log(from.x*(delta/4))
+
+      var calculatedDistance = getAbsoluteDistance(from, to)*(delta)
+
+      from.setPosition(from.x-(calculatedDistance/4),from.y-(calculatedDistance/4));
+      to.setPosition(to.x-(calculatedDistance/4),to.y-(tcalculatedDistance/4));
+    }
+    else if(delta > distance) {
+      console.log(from.x*(delta/4))
+
+      var calculatedDistance = getAbsoluteDistance(from, to)*(delta)
+
+      from.setPosition(from.x+(calculatedDistance/4),from.y+(calculatedDistance/4));
+      to.setPosition(to.x+(calculatedDistance/4),to.y+(tcalculatedDistance/4));
+    }
+  }
+
+  function getAbsoluteDistance(nodeX, nodeY) {
+    return Math.sqrt(Math.pow((nodeY.x-nodeX.x),2)+Math.pow((nodeY.y-nodeX.y),2))
+  }
+
+  function getRelativeDistance(nodeX, nodeY) {
+    var maximalDistance = ($("#localization").width()+$("#localization").height())/2;
+    return (getAbsoluteDistance(nodeX, nodeY)/maximalDistance)
+  }
+
+  function arrangeNodes() {
+    var context = $("#localization")[0].getContext('2d');
+    context.clearRect(0,0,$("#localization").width(),$("#localization").height());
+
+    var radius = Math.min($("#localization").width()/2-50,$("#localization").height()/2-50);
+    var center = {
+      x : ($("#localization").width()-50)/2,
+      y : ($("#localization").height()-50)/2
+    };
+
+    for (var i = 0; i < Nodes.length; i++)
+    {
+      var x = center.x + radius * Math.cos(2 * Math.PI * i / Nodes.length);
+      var y = center.y + radius * Math.sin(2 * Math.PI * i / Nodes.length); 
+
+      Nodes[i].setPosition(x,y);
+    }
+  }
+
+  function getNodeById(id) {
+    for(var node = 0; node < Nodes.length; node++) {
+      if(Nodes[node].id == id)
+        return node;
+    }
+  }
+
+  $( document ).ready(function() {
+    jsMote.alert("Find me..", function(id, message) {
+      new Node(id.split(":")[3]);
+    });
+  });
+
+  function localization() {
+    jsMote.broadcast("Where am I?", function(id, message, from, to, metric, clock) {
+      calculatePosition(Nodes[getNodeById(from)], Nodes[getNodeById(to)], metric);
+    });
+  }
+
+</script>
+</head>
+<body>
+  <h1>Localization</h1>
+  <canvas id="localization" width="800" height="600"></canvas>
+  <button onclick="localization();">Start Localization Round</button>
+</body>
+</html>
