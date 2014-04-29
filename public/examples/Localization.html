@@ -44,27 +44,84 @@
 </script>
 <!-- End of Configuration -->
 <script type="text/javascript">   
+  
+  Array.prototype.hasGravity = function(id) {
+    var result = -1;
+    for(var index = 0; index < this.length; index++) { 
+      if(this[index][0] == id) {
+        result = index;
+        break;
+      }
+    }
+    return result;
+  }
+
+
   var Nodes = []; 
 
   function Node(id) {
-    this.id = id;
+    
+    var id = id;
 
     this.x;
     this.y;
 
+    var gravity = new Array();
+    var fixed = false;
     var self = this;
 
     this.setPosition = function(x,y)  {
-      clearNode(this.x, this.y);
-      this.x = x;
-      this.y = y;
-      drawNode(this.x,this.y, this.id);
+      if(!fixed) {
+        clearNode(this.x, this.y);
+        this.x = x;
+        this.y = y;
+        drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
+      }
+      else {
+        drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
+      }
+    }
+
+    this.getId = function() {
+      return id;
+    }
+
+    this.addGravity = function(to, lqi) {
+      var gravityIndex = gravity.hasGravity(to.getId());
+      if(gravityIndex > -1) {
+        var weights = gravity[gravityIndex][1];
+        weights.push(lqi);
+        if(weights.length > 10) {
+          weights.splice(0,1);
+        }
+        var meanGravity = 0;
+        for(var weight = 0; weight < weights.length; weight++) {
+          meanGravity += weights[weight];
+        }
+        gravity[gravityIndex][2] = (meanGravity/weights.length)
+      }
+      else {
+        gravity.push([to.getId(), [lqi], lqi]);
+      }
+    }
+
+    this.getGravity = function() {
+      var result = [];
+      for(var i = 0; i < gravity.length; i++) {
+        result.push( [gravity[i][0], gravity[i][2]] );
+      }
+      return result;
+    }
+
+    this.toggleFixed = function() {
+      fixed = fixed ? false : true;
+      drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
     }
 
     return function() {
       var unique = true;
       $.each(Nodes, function(index, node) {
-        if(node.id == id)
+        if(node.getId() == self.getId())
           unique = false;
       });
       if(!unique) {
@@ -77,9 +134,9 @@
     }()
   }
 
-  function drawNode(x, y, id) {
+  function drawNode(x, y, id, color) {
     var context = $("#localization")[0].getContext('2d');
-    context.fillStyle = "#0FFF88";
+    context.fillStyle = color;
     context.fillRect(x,y,50,50);
 
     context.fillStyle = "#000000";
@@ -93,34 +150,24 @@
   }
 
   function calculatePosition(from, to, metric) {
-    var distance = getRelativeDistance(from, to);
-    var relativeLinkQuality = Math.sqrt(Math.pow(metric-255, 2))/255;
-    var delta = Math.sqrt(Math.pow(distance, 2)+Math.pow(relativeLinkQuality, 2))
-    if(delta < distance) {
-      console.log(from.x*(delta/4))
-
-      var calculatedDistance = getAbsoluteDistance(from, to)*(delta)
-
-      from.setPosition(from.x-(calculatedDistance/4),from.y-(calculatedDistance/4));
-      to.setPosition(to.x-(calculatedDistance/4),to.y-(tcalculatedDistance/4));
-    }
-    else if(delta > distance) {
-      console.log(from.x*(delta/4))
-
-      var calculatedDistance = getAbsoluteDistance(from, to)*(delta)
-
-      from.setPosition(from.x+(calculatedDistance/4),from.y+(calculatedDistance/4));
-      to.setPosition(to.x+(calculatedDistance/4),to.y+(tcalculatedDistance/4));
-    }
+    var linkQuality = Math.sqrt(Math.pow(metric-255, 2))/255;
+    from.addGravity(to, linkQuality);
+    recalculatePosition(from);
   }
 
-  function getAbsoluteDistance(nodeX, nodeY) {
-    return Math.sqrt(Math.pow((nodeY.x-nodeX.x),2)+Math.pow((nodeY.y-nodeX.y),2))
+  function recalculatePosition(node) {
+    drawBoundingboxes(node, node.getGravity());
   }
 
-  function getRelativeDistance(nodeX, nodeY) {
-    var maximalDistance = ($("#localization").width()+$("#localization").height())/2;
-    return (getAbsoluteDistance(nodeX, nodeY)/maximalDistance)
+  function drawBoundingboxes(node, gravity) {
+    var maxDistance = (Math.min($("#localization").width()/2-50,$("#localization").height()/2-50));
+    for(var i = 0; i < gravity.length; i++) {
+      var boxRadius = maxDistance*gravity[i][1];
+      var context = $("#localization")[0].getContext('2d');
+          context.fillStyle = "#FF0000";
+          context.rect((node.x+25)-boxRadius,(node.y+25)-boxRadius,boxRadius*2, boxRadius*2);
+          context.stroke();
+    }
   }
 
   function arrangeNodes() {
@@ -144,14 +191,19 @@
 
   function getNodeById(id) {
     for(var node = 0; node < Nodes.length; node++) {
-      if(Nodes[node].id == id)
+      if(Nodes[node].getId() == id)
         return node;
     }
   }
 
   $( document ).ready(function() {
     jsMote.alert("Find me..", function(id, message) {
-      new Node(id.split(":")[3]);
+      if(Nodes.length < 1) {
+        new Node(id.split(":")[3]).toggleFixed();
+      }
+      else {
+        new Node(id.split(":")[3]);
+      }
     });
   });
 

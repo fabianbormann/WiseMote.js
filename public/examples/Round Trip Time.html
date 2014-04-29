@@ -31,10 +31,11 @@
 <script type="text/javascript">
 
 	var nodesInExperiment = 0;
-
+    var outputFormat = "table";
+    var finish = [];
 	var measurements = {
 		length : 0,
-		data : new Array
+		data : []
 	} 
 
 	function Measurement(type, payloadSize) {
@@ -42,74 +43,69 @@
 		this.payload = Array(payloadSize).join('x');
 		this.delta = [];
 		this.roundTripTime = 0;
-
-		this.now = new Date();
-
-		var self = this;
-
-		return function() {
-			switch(self.type) {
-				case "alert":
-					jsMote.alert(self.payload, function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;
-				case "broadcast":
-					jsMote.broadcast(self.payload, function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;
-				case "getLedState":
-					jsMote.getLedState(function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;
-				case "switchLedState":
-					jsMote.switchLed((Math.random() < 0.5), function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;				
-				case "getTemp":
-					jsMote.getSensorValue("temperature", function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;	
-				case "getLight":
-					jsMote.getSensorValue("light", function() {
-    					current = new Date();
-    					rtt = current-self.now;
-    					self.roundTripTime = addDelta(rtt, self.delta);
-					});
-					break;	
-				default:
-					throw new Error("Unknown type: "+type);	
-			}
-		}()
+		this.now;
 	}
 
     function startMeasurment() {
-
     	measurements.data = [];
+        finish = [];
+        for(var i = 0; i < $('#measurements').val(); i++) {
+		  measurements.data.push(new Measurement( $('#functionSelect').val(), $('#payloadLength').val() ));
+        }
+        measure();
+    }
 
-    	for(var i = 0; i < $('#measurements').val(); i++) {
-			measurements.data.push(new Measurement( "alert", $('#payloadLength').val() ));
-			measurements.data.push(new Measurement( "broadcast", $('#payloadLength').val() ));
-			measurements.data.push(new Measurement( "getLedState", $('#payloadLength').val() ));
-			measurements.data.push(new Measurement( "switchLedState", $('#payloadLength').val() ));
-			measurements.data.push(new Measurement( "getTemp", $('#payloadLength').val() ));
-			measurements.data.push(new Measurement( "getLight", $('#payloadLength').val() ));
-		}
+    function measure() {
+        if(measurements.data.length > 0) {
+            var internalCounter = nodesInExperiment;
+            measurements.data[0].now = new Date();
+            switch(measurements.data[0].type) {
+                case "alert":
+                    jsMote.alert(measurements.data[0].payload, function() {
+                        internalCounter--;
+                        logMeasure(internalCounter);
+                    });
+                    break;
+                case "getLedState":
+                    jsMote.getLedState(function() {
+                        internalCounter--;
+                        logMeasure(internalCounter);
+                    });
+                    break;
+                case "switchLedState":
+                    jsMote.switchLed((Math.random() < 0.5), function() {
+                        internalCounter--;
+                        logMeasure(internalCounter);
+                    });
+                    break;              
+                case "getTemp":
+                    jsMote.getSensorValue("temperature", function() {
+                        internalCounter--;
+                        logMeasure(internalCounter);
+                    });
+                    break;  
+                case "getLight":
+                    jsMote.getSensorValue("light", function() {
+                        internalCounter--;
+                        logMeasure(internalCounter);
+                    });
+                    break;  
+                default:
+                    throw new Error("Unknown type: "+type); 
+            }
+        }
+    }
 
+    function logMeasure(internalCounter) {
+        current = new Date();
+        rtt = current-measurements.data[0].now;
+        measurements.data[0].roundTripTime = addDelta(rtt, measurements.data[0].delta);
+        if(internalCounter == 0) {
+            finish.push(measurements.data[0]);
+            measurements.data.splice(0,1);
+            measure();
+            updateView();
+        }
     }
 
     function addDelta(rtt, delta) {
@@ -118,85 +114,31 @@
     	for(var i = 0; i < delta.length; i++) {
     		deltaSum += delta[i];
     	}
-    	updateView();
     	return (deltaSum/delta.length);
     }
 
     function updateView() {
+    	if(outputFormat == "table") {
+            var ouput = "<table><tr><td>Function</td><td>Measurement</td><td>Average Round Trip Time</td><td>Nodes in Experiment</td><td></td></tr>"
+            $.each(finish, function(index, finishedMeasurement) {
+                ouput += "<tr><td>"+finishedMeasurement.type+"</td><td>"+(index+1)+"</td><td>"+finishedMeasurement.roundTripTime+"</td><td>"+nodesInExperiment+"</td><td><button onclick=\"console.log(finish["+index+"])\">Log Measure</button></td></tr>"
+            });
+            ouput += "</table>"
+        	$("#result").html(ouput);
+        }
+        else {
+            var ouput = "Function;Measurement;Average Round Trip Time;Nodes in Experiment<br>"
+            $.each(finish, function(index, finishedMeasurement) {
+                ouput += finishedMeasurement.type+";"+(index+1)+";"+finishedMeasurement.roundTripTime+";"+nodesInExperiment+"<br>"
+            });
+            $("#result").html(ouput);        
+        }
+    }
 
-    	var table = "<table><tr><td>Function</td><td>Measurements</td><td>Average Round Trip Time [ms]</td><td>Nodes in Experiment</td></tr>"
-
-    	var alerts = [];
-    	var broadcasts = [];
-    	var switchLeds = [];
-    	var ledStates = [];
-    	var temps = [];
-    	var ligths = [];
-
-    	for(var i = 0; i < measurements.data.length; i++) {
-    		if(measurements.data[i].type == "alert" && measurements.data[i].roundTripTime > 0) {
-    			alerts.push(measurements.data[i].roundTripTime);
-    		}
-    		else if (measurements.data[i].type == "broadcast" && measurements.data[i].roundTripTime > 0) {
-    			broadcasts.push(measurements.data[i].roundTripTime);
-    		}
-    		else if (measurements.data[i].type == "getLedState" && measurements.data[i].roundTripTime > 0) {
-    			ledStates.push(measurements.data[i].roundTripTime);
-    		}
-    		else if (measurements.data[i].type == "switchLedState" && measurements.data[i].roundTripTime > 0) {
-    			switchLeds.push(measurements.data[i].roundTripTime);
-    		}
-    		else if (measurements.data[i].type == "getTemp" && measurements.data[i].roundTripTime > 0) {
-    			temps.push(measurements.data[i].roundTripTime);
-    		}
-    		else if (measurements.data[i].type == "getLight" && measurements.data[i].roundTripTime > 0) {
-    			ligths.push(measurements.data[i].roundTripTime);
-    		}
-    	}
-    	var rtt = 0;
-    	$.each(alerts, function(index, value) {
-    		rtt += value;
-    	});
-
-    	rtt = rtt/alerts.length;
-    	table += "<tr><td>Alert</td><td>"+alerts.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr>";
-		
-		rtt = 0;
-    	$.each(broadcasts, function(index, value) {
-    		rtt += value;
-    	});
-    	rtt = rtt/broadcasts.length;
-    	table += "<tr><td>Broadcast</td><td>"+broadcasts.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr>";
-
-		rtt = 0;
-    	$.each(switchLeds, function(index, value) {
-    		rtt += value;
-    	});
-    	rtt = rtt/switchLeds.length;
-    	table += "<tr><td>Switch Led</td><td>"+switchLeds.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr>";
-
-		rtt = 0;
-    	$.each(ledStates, function(index, value) {
-    		rtt += value;
-    	});
-    	rtt = rtt/ledStates.length;
-    	table += "<tr><td>Get Led State</td><td>"+ledStates.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr>";
-
-		rtt = 0;
-    	$.each(temps, function(index, value) {
-    		rtt += value;
-    	});
-    	rtt = rtt/temps.length;
-    	table += "<tr><td>Get Sensor Value (temperature)</td><td>"+temps.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr>";
-
-		rtt = 0;
-    	$.each(ligths, function(index, value) {
-    		rtt += value;
-    	});
-    	rtt = rtt/ligths.length;
-    	table += "<tr><td>Get Sensor Value (light)</td><td>"+ligths.length+"</td><td>"+rtt+"</td><td>"+nodesInExperiment+"</td></tr></table><br><button onclick=\"console.log(measurements)\">Log complete data (console)</button>";
-
-    	$("#result").html(table);
+    function toggleOutput() {
+        outputFormat = (outputFormat == "table") ? "CSV" : "table";
+        $('#ouput').html(((outputFormat == "table") ? "CSV" : "Table")+" ouput");
+        updateView();
     }
 
     $( document ).ready(function() {
@@ -208,6 +150,15 @@
 </head>
 <body>
   <h1>Round Trip Time</h1>
+  <label for="functionSelect">Function type</label>
+  <select id="functionSelect">
+    <option value="alert">Alert</option>
+    <option value="getLedState">Get Led State</option>
+    <option value="switchLedState">Switch Led State</option>
+    <option value="getTemp">Get Temperature Value</option>
+    <option value="getTemp">Get Light Sensor Value</option>
+  </select>
+  <br>
   <label for="measurements">Measurements</label>
   <input id="measurements" type="number" min="1" value="1" step="1" pattern="\d+"/><br>
   <label for="payloadLength">payload size (char count)</label>
@@ -215,5 +166,7 @@
   <button onclick="startMeasurment();">Start measurement</button>
   <br>
   <div id="result"></div>
+  <br>
+  <button onclick="toggleOutput();" id="ouput">CSV output</button>
 </body>
 </html>
