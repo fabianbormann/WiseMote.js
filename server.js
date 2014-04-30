@@ -17,7 +17,8 @@ app.configure(function () {
 	app.set('view engine', 'html');
 	app.set('views', __dirname + '/views');
 
-	app.use(express.bodyParser());
+	app.use(express.json());
+	app.use(express.urlencoded());
 	app.use(express.static(__dirname + '/public/'));
 	app.use(express.cookieParser('whatever'));
   	app.use(connect.cookieSession({ cookie: { maxAge: 60 * 60 * 1000 }}));
@@ -52,10 +53,6 @@ app.post('/update/project/:projectId/configuration', workspace.saveProjectConfig
 app.post('/project/:projectId/add/member', workspace.addProjectMember);
 app.post('/experiment/:experimentId/save', testbed.saveExperiment);
 app.post('/nodes/message/send/:experimentId', testbed.sendMessage);
-
-/***
-Use only in edit mode.
-**/
 
 app.listen(3000);
 console.log('Listening on port 3000');

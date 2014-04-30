@@ -40,9 +40,8 @@
 
 	function Measurement(type, payloadSize) {
 		this.type = type;
-		this.payload = Array(payloadSize).join('x');
+		this.payload = Array(parseInt(payloadSize)).join('x');
 		this.delta = [];
-		this.roundTripTime = 0;
 		this.now;
 	}
 
@@ -99,7 +98,8 @@
     function logMeasure(internalCounter) {
         current = new Date();
         rtt = current-measurements.data[0].now;
-        measurements.data[0].roundTripTime = addDelta(rtt, measurements.data[0].delta);
+        measurements.data[0].delta.push(rtt);
+
         if(internalCounter == 0) {
             finish.push(measurements.data[0]);
             measurements.data.splice(0,1);
@@ -108,28 +108,23 @@
         }
     }
 
-    function addDelta(rtt, delta) {
-    	deltaSum = 0;
-    	delta.push(rtt);
-    	for(var i = 0; i < delta.length; i++) {
-    		deltaSum += delta[i];
-    	}
-    	return (deltaSum/delta.length);
-    }
-
     function updateView() {
     	if(outputFormat == "table") {
             var ouput = "<table><tr><td>Function</td><td>Measurement</td><td>Average Round Trip Time</td><td>Nodes in Experiment</td><td></td></tr>"
-            $.each(finish, function(index, finishedMeasurement) {
-                ouput += "<tr><td>"+finishedMeasurement.type+"</td><td>"+(index+1)+"</td><td>"+finishedMeasurement.roundTripTime+"</td><td>"+nodesInExperiment+"</td><td><button onclick=\"console.log(finish["+index+"])\">Log Measure</button></td></tr>"
+            $.each(finish, function(measurementIndex, finishedMeasurement) {
+                $.each(finishedMeasurement.delta, function(deltaIndex, individualDelta) {
+                    ouput += "<tr><td>"+finishedMeasurement.type+"</td><td>"+(measurementIndex+1)+"</td><td>"+individualDelta+"</td><td>"+nodesInExperiment+"</td></tr>";
+                });
             });
             ouput += "</table>"
         	$("#result").html(ouput);
         }
         else {
-            var ouput = "Function;Measurement;Average Round Trip Time;Nodes in Experiment<br>"
-            $.each(finish, function(index, finishedMeasurement) {
-                ouput += finishedMeasurement.type+";"+(index+1)+";"+finishedMeasurement.roundTripTime+";"+nodesInExperiment+"<br>"
+            var ouput = "Function;Measurement;Round Trip Time;Nodes in Experiment<br>"
+            $.each(finish, function(measurementIndex, finishedMeasurement) {
+                $.each(finishedMeasurement.delta, function(deltaIndex, individualDelta) {
+                    ouput += finishedMeasurement.type+";"+(measurementIndex+1)+";"+individualDelta+";"+nodesInExperiment+"<br>";
+                });
             });
             $("#result").html(ouput);        
         }
