@@ -2,17 +2,18 @@
 <head>
 <style>
   body {font-family: 'Open Sans', sans-serif;}
+  rect {
+    fill: #F2EFDC;
+  }
+
   .node {
-    stroke: #fff;
-    stroke-width: 1.5px;
+    fill: #F24C27;
   }
 
   .link {
-    stroke: #999;
-    stroke-opacity: .6;
+    stroke: #404040;
   }
 </style>
-<script src="http://d3js.org/d3.v3.min.js"></script>
 <!-- Configuration: Please do not remove -->
 <script src="/js/jquery-1.9.1.js"></script>
 <script src="/js/virtual-remote.js"></script>
@@ -52,72 +53,149 @@
   });
 </script>
 <!-- End of Configuration -->
-<script type="text/javascript">   
-var width = 960,
-    height = 500;
+</head>
+<body>
+<p>Use mouse click on the canvas to start a new localization round.</p>
+<div id="canvas"></div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script type="text/javascript">
+var width = 800,
+    height = 600;
 
-var color = d3.scale.category20();
+var meanQuality = [];
 
 var force = d3.layout.force()
-    .charge(-120)
-    .linkDistance(30)
-    .size([width, height]);
+    .size([width, height])
+    .linkDistance(function(link) {
+      return link.quality*300;
+    })
+    .charge(-200)
+    .on("tick", function() {
+      link.attr("x1", function(d) { return d.source.x; })
+          .attr("y1", function(d) { return d.source.y; })
+          .attr("x2", function(d) { return d.target.x; })
+          .attr("y2", function(d) { return d.target.y; });
+      node.attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+    });
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("#canvas").append("svg")
     .attr("width", width)
     .attr("height", height);
 
-d3.json("miserables.json", function(error, graph) {
-  force
-      .nodes(graph.nodes)
-      .links(graph.links)
-      .start();
+svg.append("rect")
+    .attr("width", width)
+    .attr("height", height);
 
-  var link = svg.selectAll(".link")
-      .data(graph.links)
-    .enter().append("line")
-      .attr("class", "link")
-      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+var nodes = force.nodes(),
+    links = force.links(),
+    node = svg.selectAll("g.node"),
+    link = svg.selectAll(".link");
 
-  var node = svg.selectAll(".node")
-      .data(graph.nodes)
-    .enter().append("circle")
+  function updateGraph(init) {
+    link = link.data(links);
+    link.enter().insert("line", ".node")
+      .attr("class", "link");
+
+    node = node.data(nodes);
+    node.enter().append("g")
       .attr("class", "node")
-      .attr("r", 5)
-      .style("fill", function(d) { return color(d.group); })
+      .attr("r", 15)
+      .attr("cx", function(d) { return d.x; }) 
+      .attr("cy", function(d) { return d.y; }) 
       .call(force.drag);
+    if(init) {
+      $(".description").remove();
+      node.append("image")
+          .attr("xlink:href", "/images/sensor.png")
+          .attr("x", -8)
+          .attr("y", -8)
+          .attr("class", "description")
+          .attr("width", 16)
+          .attr("height", 24);
 
-  node.append("title")
-      .text(function(d) { return d.name; });
+      node.append("text")
+          .attr("dx", 12)
+          .attr("class", "description")
+          .attr("dy", ".35em")
+          .text(function(d) { return d.name });
+    }
+    force.start();
+  }
 
-  force.on("tick", function() {
-    link.attr("x1", function(d) { return d.source.x; })
-        .attr("y1", function(d) { return d.source.y; })
-        .attr("x2", function(d) { return d.target.x; })
-        .attr("y2", function(d) { return d.target.y; });
+  function getNodeById(id) {
+      for (var i in nodes) {
+        if (nodes[i]["id"] === id) 
+          return nodes[i]
+      };
+  }
 
-    node.attr("cx", function(d) { return d.x; })
-        .attr("cy", function(d) { return d.y; });
-    });
-  });
+  function getLink(from, to) {
+      for (var i in links) {
+        if (links[i]["source"] === from && links[i]["target"] === to) 
+          return links[i]
+      };    
+  }
+
+  function updateMeanQuality(from, to, lqi) {
+    var quality;
+    for(var i = 0; i < meanQuality.length; i++) {
+      if(meanQuality[i][0] == from && meanQuality[i][1] == to) {
+        quality = meanQuality[i];
+        break;
+      }
+    }
+    if(quality) {
+      quality[2].push(lqi);
+      if(quality[2].length > 10){
+        quality[2].splice(0,1);
+      }
+      var sum = quality[2].reduce(function(previousValue, currentValue) { return previousValue + currentValue; }, 0);
+      return (sum/quality[2].length);
+    }
+  }
+
+  function updateLinks(from, to, lqi) {
+    var link = getLink(from, to);
+    if(link) {
+      link.quality = updateMeanQuality(from.id, to.id, lqi);
+    }  
+    else {
+      meanQuality.push([from.id,to.id,[lqi]]);
+      links.push({"source":from,"target":to, "quality": lqi})
+    }
+  }
+
+  function inNodes(id) {
+    for(var index = 0; index < nodes.length; index++) {
+      if(nodes[index].id == id)
+        return true
+    }
+    return false;
+  }
 
   $( document ).ready(function() {
+
+    $("#canvas").click(function() {
+      localization();
+    });
+
     jsMote.alert("ping", function(id, message) {
-      //graph.newNode(id.split(":")[3]);
+      if(!inNodes(id.split(":")[3])) {
+        nodes.push({"id": id.split(":")[3], "name": id.split(":")[3]});
+        updateGraph(true);
+      }
+      else {
+        throw new Error("Node id is already in Array. Node id must be unique!")
+      }
     });
   });
 
   function localization() {
-    jsMote.broadcast("localization", function(id, message, from, to, metric, clock) {
-      
+    jsMote.broadcast("localization", function(id, message, from, to, metric, timer) {
+      updateLinks(getNodeById(from), getNodeById(to), (metric/255));
+      updateGraph();
     });
   }
 </script>
-</head>
-<body>
-  <h1>Localization</h1>
-  <canvas id="localization" width="400" height="400"></canvas>
-  <br>
-  <button onclick="localization();">Start Localization Round</button>
 </body>
 </html>
