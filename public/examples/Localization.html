@@ -2,8 +2,17 @@
 <head>
 <style>
   body {font-family: 'Open Sans', sans-serif;}
-    #localization {background-color: #eee}
+  .node {
+    stroke: #fff;
+    stroke-width: 1.5px;
+  }
+
+  .link {
+    stroke: #999;
+    stroke-opacity: .6;
+  }
 </style>
+<script src="http://d3js.org/d3.v3.min.js"></script>
 <!-- Configuration: Please do not remove -->
 <script src="/js/jquery-1.9.1.js"></script>
 <script src="/js/virtual-remote.js"></script>
@@ -44,180 +53,71 @@
 </script>
 <!-- End of Configuration -->
 <script type="text/javascript">   
-  
-  Array.prototype.hasGravity = function(id) {
-    var result = -1;
-    for(var index = 0; index < this.length; index++) { 
-      if(this[index][0] == id) {
-        result = index;
-        break;
-      }
-    }
-    return result;
-  }
+var width = 960,
+    height = 500;
 
+var color = d3.scale.category20();
 
-  var Nodes = []; 
+var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([width, height]);
 
-  function Node(id) {
-    
-    var id = id;
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
-    this.x;
-    this.y;
+d3.json("miserables.json", function(error, graph) {
+  force
+      .nodes(graph.nodes)
+      .links(graph.links)
+      .start();
 
-    var gravity = new Array();
-    var fixed = false;
-    var self = this;
+  var link = svg.selectAll(".link")
+      .data(graph.links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
 
-    this.setPosition = function(x,y)  {
-      if(!fixed) {
-        clearNode(this.x, this.y);
-        this.x = x;
-        this.y = y;
-        drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
-      }
-      else {
-        drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
-      }
-    }
+  var node = svg.selectAll(".node")
+      .data(graph.nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", 5)
+      .style("fill", function(d) { return color(d.group); })
+      .call(force.drag);
 
-    this.getId = function() {
-      return id;
-    }
+  node.append("title")
+      .text(function(d) { return d.name; });
 
-    this.addGravity = function(to, lqi) {
-      var gravityIndex = gravity.hasGravity(to.getId());
-      if(gravityIndex > -1) {
-        var weights = gravity[gravityIndex][1];
-        weights.push(lqi);
-        if(weights.length > 10) {
-          weights.splice(0,1);
-        }
-        var meanGravity = 0;
-        for(var weight = 0; weight < weights.length; weight++) {
-          meanGravity += weights[weight];
-        }
-        gravity[gravityIndex][2] = (meanGravity/weights.length)
-      }
-      else {
-        gravity.push([to.getId(), [lqi], lqi]);
-      }
-    }
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
 
-    this.getGravity = function() {
-      var result = [];
-      for(var i = 0; i < gravity.length; i++) {
-        result.push( [gravity[i][0], gravity[i][2]] );
-      }
-      return result;
-    }
-
-    this.toggleFixed = function() {
-      fixed = fixed ? false : true;
-      drawNode(this.x,this.y, id, fixed ? "#0FFF88" : "#FF8888");
-    }
-
-    return function() {
-      var unique = true;
-      $.each(Nodes, function(index, node) {
-        if(node.getId() == self.getId())
-          unique = false;
-      });
-      if(!unique) {
-        throw new Error("Node id is already in Array. Node id must be unique!")
-      }
-      else {
-        Nodes.push(self);
-        arrangeNodes();
-      }
-    }()
-  }
-
-  function drawNode(x, y, id, color) {
-    var context = $("#localization")[0].getContext('2d');
-    context.fillStyle = color;
-    context.fillRect(x,y,50,50);
-
-    context.fillStyle = "#000000";
-    context.font = "10px Arial";
-    context.fillText(id, x+5, y+25);
-  }
-
-  function clearNode(x, y) {
-    var context = $("#localization")[0].getContext('2d');
-    context.clearRect(x,y,50,50);
-  }
-
-  function calculatePosition(from, to, metric) {
-    var linkQuality = Math.sqrt(Math.pow(metric-255, 2))/255;
-    from.addGravity(to, linkQuality);
-    recalculatePosition(from);
-  }
-
-  function recalculatePosition(node) {
-    drawBoundingboxes(node, node.getGravity());
-  }
-
-  function drawBoundingboxes(node, gravity) {
-    var maxDistance = (Math.min($("#localization").width()/2-50,$("#localization").height()/2-50));
-    for(var i = 0; i < gravity.length; i++) {
-      var boxRadius = maxDistance*gravity[i][1];
-      var context = $("#localization")[0].getContext('2d');
-          context.fillStyle = "#FF0000";
-          context.rect((node.x+25)-boxRadius,(node.y+25)-boxRadius,boxRadius*2, boxRadius*2);
-          context.stroke();
-    }
-  }
-
-  function arrangeNodes() {
-    var context = $("#localization")[0].getContext('2d');
-    context.clearRect(0,0,$("#localization").width(),$("#localization").height());
-
-    var radius = Math.min($("#localization").width()/2-50,$("#localization").height()/2-50);
-    var center = {
-      x : ($("#localization").width()-50)/2,
-      y : ($("#localization").height()-50)/2
-    };
-
-    for (var i = 0; i < Nodes.length; i++)
-    {
-      var x = center.x + radius * Math.cos(2 * Math.PI * i / Nodes.length);
-      var y = center.y + radius * Math.sin(2 * Math.PI * i / Nodes.length); 
-
-      Nodes[i].setPosition(x,y);
-    }
-  }
-
-  function getNodeById(id) {
-    for(var node = 0; node < Nodes.length; node++) {
-      if(Nodes[node].getId() == id)
-        return node;
-    }
-  }
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+    });
+  });
 
   $( document ).ready(function() {
-    jsMote.alert("Find me..", function(id, message) {
-      if(Nodes.length < 1) {
-        new Node(id.split(":")[3]).toggleFixed();
-      }
-      else {
-        new Node(id.split(":")[3]);
-      }
+    jsMote.alert("ping", function(id, message) {
+      //graph.newNode(id.split(":")[3]);
     });
   });
 
   function localization() {
-    jsMote.broadcast("Where am I?", function(id, message, from, to, metric, clock) {
-      calculatePosition(Nodes[getNodeById(from)], Nodes[getNodeById(to)], metric);
+    jsMote.broadcast("localization", function(id, message, from, to, metric, clock) {
+      
     });
   }
-
 </script>
 </head>
 <body>
   <h1>Localization</h1>
-  <canvas id="localization" width="800" height="600"></canvas>
+  <canvas id="localization" width="400" height="400"></canvas>
+  <br>
   <button onclick="localization();">Start Localization Round</button>
 </body>
 </html>

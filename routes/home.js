@@ -18,7 +18,9 @@ exports.getExamples = function(req, res) {
 		else {
 			var examples = [];
 			for(var example = 0; example < files.length; example++) {
-				examples.push(files[example].split('.')[0]);
+				if(files[example] != '.DS_Store') {
+					examples.push(files[example].split('.')[0]);
+				}
 			}
 			res.send(examples);
 		}

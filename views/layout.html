@@ -28,11 +28,9 @@
 			<script type="text/javascript">
 			    $( document ).ready(function() {
 			        $('.ui.dropdown.item').dropdown();
-
 			        $.get('/list/examples', function(examples) {
 			        	$.each(examples, function(index, example) {
-			        		$('#examples').append('<a class="item" href="/show/example/'+
-			        			example+'">'+example+'</a>');
+			        		$('#examples').append('<a class="item" href="/show/example/'+example+'">'+example+'</a>');
 			        	});
 			        });
 
