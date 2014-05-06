@@ -1,0 +1,76 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="sixteen wide middle aligned column">
+    <h2 class="ui header">
+        <i class="big circular users icon"></i>
+        <div class="content">
+            Groups
+            <div class="sub header">
+                Manage your groups. Search for friends or classmates.<br> Give your Group unique names like xyz-project2014.<br> You can add a complete group to one of your projects.
+            </div>
+        </div>
+    </h2> 
+</div>
+<div class="ui divider"></div>
+<div class="sixteen wide column">
+    <div class="ui two column relaxed grid basic segment">
+        <div class="column">
+            <table class="ui table segment">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Members</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if groups.length > 0 %}
+                    {% for group in groups %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ group.name }}</td>
+                        <td>{% for member in group.members %}
+                                {% if loop.first %}
+                                    {{ member }}
+                                {% else %}
+                                    <br>{{ member }}
+                                {% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% else %}
+                    <tr class="warning">
+                        <td colspan="3">You don't have any groups yet.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+                <tfoot>
+                </tfoot>
+            </table>
+        </div>
+        <div class="column">
+            <form id="reservationForm" class="ui form segment" action="/experiment/start" method="POST">
+                <input type="hidden" name="memberSelection" id="memberSelection">
+                <h2>Add new Group</h2>
+                <div class="ui divider"></div>
+                <div class="field">
+                    <label>Name</label>
+                    <input type="text" id="groupeName" name="groupeName" maxlength="100" placeholder="Unique groupe name" required> 
+                    <div style="display:none" id="groupeNameInfo" class="ui red pointing above ui label">The name is limited to 100 characters</div>
+                </div>
+                <div class="ui divider"></div>
+                <div id="selectedMember" class="ui small yellow message">You need to select any members</div>
+                <div class="field">
+                    <div class="member"></div>
+                </div>
+                <button type="button" class="ui small green labeled icon button" id="selectMember"><i class="add icon"></i> Select members</button>
+                <div class="ui divider"></div>
+                <button type="button" id="createGroup" class="ui small green labeled icon submit button"><i class="add icon"></i>Create Group</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

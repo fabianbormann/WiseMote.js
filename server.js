@@ -44,6 +44,7 @@ app.get('/example/:name/clone', workspace.cloneExample);
 app.get('/list/examples', home.getExamples);
 app.get('/remove/project/:projectId', workspace.removeProject);
 app.get('/experiment/view/code/:experimentId', workspace.viewCode);
+app.get('/groups', home.showGroups);
 
 app.post('/new/project', workspace.newProject);
 app.post('/project/:projectId/save', workspace.saveProject);

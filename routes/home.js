@@ -1,4 +1,9 @@
 var fs = require('fs');
+var mongoose = require('mongoose');
+var db = mongoose.connection;
+
+var Group = require('../models/Group.js');
+var User = require('../models/User.js');
 
 exports.welcome = function(req, res) {
 	if (!req.session.email) {
@@ -25,4 +30,8 @@ exports.getExamples = function(req, res) {
 			res.send(examples);
 		}
 	});
+}
+
+exports.showGroups = function(req, res) {
+	res.render('groups');
 }
