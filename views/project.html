@@ -46,7 +46,6 @@
             .modal('setting', {
             	closable :false,
 			    onHide : function(){
-			     	$(' #addGroups ').hide();
 			     	$(' #addMembers ').hide();
 			     	$(' #configMessage ').hide();
 			    },
@@ -72,12 +71,6 @@
 
         $(' #addMemberButton ').click(function () {
         	$(' #addMembers ').show();
-        	$(' #addGroups ').hide();
-        });
-
-        $(' #addGroupButton ').click(function () {
-        	$(' #addGroups ').show();
-        	$(' #addMembers ').hide();
         });
 
         $(' #addMember ').click(function () {
@@ -134,11 +127,7 @@
 			<p>{{ member }}</p>
 		{% endfor %}
 		<div class="ui divider"></div>
-		<div class="ui buttons">
 		<button class="ui red button" id="addMemberButton">Add members</button>
-		<div class="or"></div>
-		<button class="ui green button" id="addGroupButton">Add group</button>
-		</div>
 		<div id="addMembers" style="display: none;">
 			<div class="ui divider"></div>
 			<div class="ui form">
@@ -147,15 +136,6 @@
 				</div>
 			</div>
 			<button class="blue ui button" id="addMember">Add member</button>
-		</div>
-		<div id="addGroups" style="display: none;">
-			<div class="ui divider"></div>
-			<div class="ui form">
-				<div class="field">
-					<input type="text" placeholder="add group name">
-				</div>
-			</div>
-			<button class="blue ui button" id="addGroup">Add group</button>
 		</div>
     </div>
     <div class="actions">
