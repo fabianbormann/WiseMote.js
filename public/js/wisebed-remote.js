@@ -64,22 +64,51 @@ var JsMote = (function() {
 		* Returns the same message 
 		* e.g. alert("hello testbed") will return "hello testbed" from testbed
 		*/
-		this.alert = function(message, callback) {
+		this.alert = function(message, callback, nodeId) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered any message"); break;
-		        case 1: callback = this.receive;
-		        case 2: break;
-		        default: throw new Error('Illegal argument count!')
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "";
+		        	break;
+		        case 2: 
+		        	if(typeof arguments[1] == 'function') {
+		        		nodeId = "";
+		        	}
+		        	else if(typeof arguments[1] == 'string') {
+		        		nodeId = arguments[1];
+		        		callback = this.receive;
+		        	}
+		        	else {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	break;
+		        case 3:
+		        	if(typeof arguments[1] == 'string' && typeof arguments[2] == 'function') {
+		        		var helper = arguments[1];
+		        		callback = arguments[2];
+		        		nodeId = helper;
+		        	}
+		        	else if(typeof arguments[1] == 'function' && typeof arguments[2] == 'string') {
+		        		var callback = arguments[1];
+		        		var nodeId = arguments[2];
+		        	}
+		        	else {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
 	    	}
 
 			var function_type = CoAP.getHexString("alert");
 			var function_args = CoAP.getHexString(message);
 			var ticketId = getTicketId("alert"+message);
 			var hexTicketId = CoAP.getHexString(ticketId);
+			var hexNodeId = CoAP.getHexString(nodeId)
 			
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
 		};
 
 		/**
@@ -103,7 +132,7 @@ var JsMote = (function() {
 			
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);	
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);	
 		};
 
 		/**
@@ -128,7 +157,7 @@ var JsMote = (function() {
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);
 		};
 
 		/**
@@ -162,7 +191,7 @@ var JsMote = (function() {
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+function_args);
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);
 		};
 
 		/**
@@ -183,7 +212,7 @@ var JsMote = (function() {
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter);	    	
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter);	    	
 		}
 
 		/**

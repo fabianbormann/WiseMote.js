@@ -79,47 +79,51 @@ public:
 		char * function;
 		char * ticket_id;
 		char * args;
+		char * node_id;
 
 		function = strtok(str, "/");
 		ticket_id = strtok(NULL, "/");
+		node_id = strtok(NULL, "/");
 		args = strtok(NULL, "/");
 
-		if (strcmp(function, "alert") == 0) {
-			char *argument;
-			argument = strtok(args, "/");
-			alert(argument, ticket_id);
-		}
-
-		if (strcmp(function, "switchLed") == 0) {
-
-			char *argument;
-			argument = strtok(args, "/");
-
-			if ((strcmp(argument, "on") == 0)) {
-				switch_led_state(true, ticket_id);
-			} else if ((strcmp(argument, "off") == 0)) {
-				switch_led_state(false, ticket_id);
+		if(strcmp(node_id, "") || strcmp(node_id, (char *)radio_->id())) {
+			if (strcmp(function, "alert") == 0) {
+				char *argument;
+				argument = strtok(args, "/");
+				alert(argument, ticket_id);
 			}
-		}
 
-		if (strcmp(function, "broadcast") == 0) {
+			if (strcmp(function, "switchLed") == 0) {
 
-			char *argument;
-			argument = strtok(args, "/");
+				char *argument;
+				argument = strtok(args, "/");
 
-			broadcast(argument, ticket_id);
-		}
+				if ((strcmp(argument, "on") == 0)) {
+					switch_led_state(true, ticket_id);
+				} else if ((strcmp(argument, "off") == 0)) {
+					switch_led_state(false, ticket_id);
+				}
+			}
 
-		if (strcmp(function, "getSensorValue") == 0) {
+			if (strcmp(function, "broadcast") == 0) {
 
-			char *argument;
-			argument = strtok(args, "/");
+				char *argument;
+				argument = strtok(args, "/");
 
-			getSensorValue(argument, ticket_id);
-		}
+				broadcast(argument, ticket_id);
+			}
 
-		if (strcmp(function, "getLedState") == 0) {
-			getLedState(ticket_id);
+			if (strcmp(function, "getSensorValue") == 0) {
+
+				char *argument;
+				argument = strtok(args, "/");
+
+				getSensorValue(argument, ticket_id);
+			}
+
+			if (strcmp(function, "getLedState") == 0) {
+				getLedState(ticket_id);
+			}
 		}
 	}
 
@@ -249,11 +253,7 @@ public:
 
     void reply(char * message) {
     	size_t len = strlen(message);
-
-    	block_data_t buf[len];
-    	strcpy((char*) buf, message);
-
-    	uart_->write( len, buf );
+    	uart_->write( len, (block_data_t*)message );
     }
 
 private:
