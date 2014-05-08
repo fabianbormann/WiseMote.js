@@ -42,6 +42,8 @@ class RemoteApplication {
 
 public:
 
+	Os::Radio::node_id_t my_address;
+
 	void init(Os::AppMainParameter& value) {
 		ospointer = &value;
 
@@ -60,6 +62,7 @@ public:
 
 		radio_->enable_radio();
 		radio_->reg_recv_callback<RemoteApplication, &RemoteApplication::receive_radio_message> (this);
+		my_address = Radio::BROADCAST_ADDRESS;
 
 		uart_->enable_serial_comm();
 
@@ -81,12 +84,22 @@ public:
 		char * args;
 		char * node_id;
 
+		debug_->debug(str);
+
 		function = strtok(str, "/");
 		ticket_id = strtok(NULL, "/");
 		node_id = strtok(NULL, "/");
 		args = strtok(NULL, "/");
 
-		if(strcmp(node_id, "") || strcmp(node_id, (char *)radio_->id())) {
+		debug_->debug(node_id);
+
+		char my_id[64];
+	    uint8 n = snprintf(my_id, 63,"%x", my_address);
+	    my_id[n] = '\0';
+
+		debug_->debug(my_id);
+
+		if(strcmp(node_id, "all") || strcmp(node_id, my_id)) {
 			if (strcmp(function, "alert") == 0) {
 				char *argument;
 				argument = strtok(args, "/");

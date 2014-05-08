@@ -69,32 +69,26 @@ var JsMote = (function() {
 		        case 0: throw new Error("You haven't entered any message"); break;
 		        case 1: 
 		        	callback = this.receive;
-		        	nodeId = "";
+		        	nodeId = "all";
 		        	break;
 		        case 2: 
-		        	if(typeof arguments[1] == 'function') {
-		        		nodeId = "";
-		        	}
-		        	else if(typeof arguments[1] == 'string') {
-		        		nodeId = arguments[1];
-		        		callback = this.receive;
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
 		        	}
 		        	else {
-		        		throw new Error('Illegal argument type!');
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
 		        	}
 		        	break;
 		        case 3:
-		        	if(typeof arguments[1] == 'string' && typeof arguments[2] == 'function') {
-		        		var helper = arguments[1];
-		        		callback = arguments[2];
-		        		nodeId = helper;
-		        	}
-		        	else if(typeof arguments[1] == 'function' && typeof arguments[2] == 'string') {
-		        		var callback = arguments[1];
-		        		var nodeId = arguments[2];
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
 		        	}
 		        	else {
-		        		throw new Error('Illegal argument type!');
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
 		        	}
 		        	break;
 		        default: throw new Error('Illegal argument count!');
@@ -117,12 +111,34 @@ var JsMote = (function() {
 		* @param sensor {String} light, temperature
 		* @param callback {function} optional callback function for response 
 		*/
-		this.getSensorValue  = function(sensor, callback) {
+		this.getSensorValue  = function(sensor, callback, nodeId) {
 			switch(arguments.length) {
 		        case 0: throw new Error("Enter a sensor name like light or temperature!"); break;
-		        case 1: callback = this.receive;
-		        case 2: break;
-		        default: throw new Error('Illegal argument count!')
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 2: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 3:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
 	    	}
 
 			var function_type = CoAP.getHexString("getSensorValue");
@@ -142,12 +158,34 @@ var JsMote = (function() {
 		* @param message {String} broadcasting message
 		* @param callback {function} optional callback function for response 
 		*/
-		this.broadcast = function(message, callback) {
+		this.broadcast = function(message, callback, nodeId) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered any message"); break;
-		        case 1: callback = this.receive;
-		        case 2: break;
-		        default: throw new Error('Illegal argument count!')
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 2: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 3:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
 	    	}
 
 			var function_type = CoAP.getHexString("broadcast");
@@ -166,12 +204,34 @@ var JsMote = (function() {
 		* @param state {String, bool} on,off,0,1
 		* @param callback {function} optional callback function for response 
 		*/
-		this.switchLed  = function(state, callback) {
+		this.switchLed  = function(state, callback, nodeId) {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered the new led state (on/off)"); break;
-		        case 1: callback = this.receive;
-		        case 2: break;
-		        default: throw new Error('Illegal argument count!')
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 2: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 3:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
 	    	}
 			
 			switch(state) {
@@ -199,11 +259,33 @@ var JsMote = (function() {
 		* 
 		* @param callback {function} optional callback function for response
 		*/
-		this.getLedState = function(callback) {
+		this.getLedState = function(callback, nodeId) {
 			switch(arguments.length) {
-		        case 0: callback = this.receive;
-		        case 1: break;
-		        default: throw new Error('Illegal argument count!')
+		        case 0: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 1: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 2:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
 	    	}			
 
 			var function_type = CoAP.getHexString("getLedState");
@@ -245,6 +327,32 @@ var JsMote = (function() {
 
 	        $.post('/nodes/message/send/'+experimentId, { message : base64_message });
 		};
+
+		function handleOptionalParams(params) {
+			result = new Array();
+			if(params.length == 1) {
+				if(typeof params[0] == 'function') {
+	        		result.push(params[0]);
+	        		result.push("all");
+	        	}
+	        	else if(typeof params[0] == 'string') {
+	        		result.push(this.receive);
+	        		result.push(params[0]);
+	        	}
+		    }
+	    	else if(params.length == 2) {
+	    		if(typeof params[0] == 'string' && typeof params[1] == 'function') {
+	        		result.push(params[1]);
+	        		result.push(params[0]);
+	        	}
+	        	else if(typeof params[0] == 'function' && typeof params[1] == 'string') {
+	        		result.push(params[0]);
+	        		result.push(params[1]);
+	        	}
+	        }
+	        return result;
+
+		}
 
 	};
 
