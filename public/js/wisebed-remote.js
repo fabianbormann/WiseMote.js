@@ -29,6 +29,7 @@ var JsMote = (function() {
 	io = io.connect()
 
 	io.on('incommingMessage', function(data) {
+		console.log(data)
     	var callback = tickets.get(data.message.ticket);
 		if(typeof callback == 'function') {
 			if(data.message.callback == "alert") {
@@ -55,6 +56,7 @@ var JsMote = (function() {
 	var remote = function() {
 
 		var experimentId;
+		var self = this;
 
 		this.setExperimentId = function(experiment_id) {
 			experimentId = experiment_id;
@@ -98,7 +100,7 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(message);
 			var ticketId = getTicketId("alert"+message);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId)
+			var hexNodeId = CoAP.getHexString(nodeId);
 			
 			tickets.checkIn(ticketId, callback);
 
@@ -145,10 +147,11 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(sensor);
 			var ticketId = getTicketId("getSensorValue"+sensor);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			
+			var hexNodeId = CoAP.getHexString(nodeId);
+
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);	
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);	
 		};
 
 		/**
@@ -192,10 +195,11 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(message);
 			var ticketId = getTicketId("broadcast"+message);
 			var hexTicketId = CoAP.getHexString(ticketId);
+			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
 		};
 
 		/**
@@ -248,10 +252,11 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(state);
 			var ticketId = getTicketId("switchLed"+state);
 			var hexTicketId = CoAP.getHexString(ticketId);
+			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter+function_args);
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
 		};
 
 		/**
@@ -291,10 +296,11 @@ var JsMote = (function() {
 			var function_type = CoAP.getHexString("getLedState");
 			var ticketId = getTicketId("getLedState");
 			var hexTicketId = CoAP.getHexString(ticketId);
+			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+delimiter);	    	
+			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);	    	
 		}
 
 		/**
@@ -336,7 +342,7 @@ var JsMote = (function() {
 	        		result.push("all");
 	        	}
 	        	else if(typeof params[0] == 'string') {
-	        		result.push(this.receive);
+	        		result.push(self.receive);
 	        		result.push(params[0]);
 	        	}
 		    }

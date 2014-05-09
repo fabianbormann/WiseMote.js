@@ -57,25 +57,21 @@
       jsMote.broadcast(text);
     }
     
+    /**
+    * Check the temperature sensor of all nodes.
+    * 
+    * Is this value lower than 20 degrees Celsius this node has to broadcast 
+    * "turn up the heating. It's only x degrees Celsius" to all other nodes.
+    */
     function callbackExample() {
       jsMote.getSensorValue("temperature", function(source_id, value) {
-        if(value > 20) {
-          jsMote.broadcast("It's warm today. "+value+" degrees Celsius..",
-            function(id, message, from, to, metric, clock) {
-              if(source_id != id) {
-                alert(to+": "+from+" send "+message+" at "+clock+"ms of my internal clock.");
-              }
-            });
-        }
-        else {
-          jsMote.broadcast("Turn up the heating! Only "+value+" degrees Celsius!",
-            function(id, message, from, to, metric, clock) {
-              if(source_id != id) {
-                alert(to+": "+from+" send "+message+" at "+clock+"ms of my internal clock.");
-              }
+        if(value < 20) {
+          jsMote.broadcast("Turn up the heating! It's only "+value+" degrees Celsius!", source_id.split(":")[3],
+            function(id, message, from, to, metric, timer) {
+              alert(from+" says: "+message+". I ("+to+") shout call heating.on()");
           });
         }
-      })
+      });
     }
   </script>
 </head>

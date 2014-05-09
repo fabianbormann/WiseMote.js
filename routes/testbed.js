@@ -175,45 +175,41 @@ module.exports = function(io) {
 			else {
 				if (experiment) {
 					if(!experiment.flashed) {
-						fs.readFile('./public/apps/remote_app.bin', function (err, image) {
-							if (err) { 
-								throw err;
-							}
-							else {
+						var image; 
 
-								var data = {
-									configurations : []
-								};
 
-								var appImage = new Buffer(image).toString('base64');
+						image = fs.readFileSync('./public/apps/remote_app.bin');
+						var data = {
+							configurations : []
+						};
 
-								data.configurations.push({
-									nodeUrns : experiment.nodeUrns,
-									image : "data:application/macbinary;base64,"+appImage
-								});
+						var appImage = new Buffer(image).toString('base64');
 
-								testbed.experiments.flashNodes(
-									experiment.experimentId, 
-									data, 
-									broadcastFinishedFlashing,
-									broadcastFlashingProgress,
-									function(jqXHR, textStatus, errorThrown) {
-										console.log("error! :"); 
-										console.log(jqXHR);
-										console.log(textStatus);
-										console.log(errorThrown);
-									}
-								);
-
-								experiment.update({ $set: { flashed: true }}).exec();
-
-								res.render("experiment", {
-									experiment : experiment,
-									loading :  {text : 
-										'<p>Flashing remote application onto sensor nodes.</p><div class="ui active striped progress"><div id="progressbar" class="bar" style="width: 0%; display:block;"></div></div>'},
-								});	
-							}
+						data.configurations.push({
+							nodeUrns : experiment.nodeUrns,
+							image : "data:application/macbinary;base64,"+appImage
 						});
+
+						testbed.experiments.flashNodes(
+							experiment.experimentId, 
+							data, 
+							broadcastFinishedFlashing,
+							broadcastFlashingProgress,
+							function(jqXHR, textStatus, errorThrown) {
+								console.log("error! :"); 
+								console.log(jqXHR);
+								console.log(textStatus);
+								console.log(errorThrown);
+							}
+						);
+
+						experiment.update({ $set: { flashed: true }}).exec();
+
+						res.render("experiment", {
+							experiment : experiment,
+							loading :  {text : 
+								'<p>Flashing remote application onto sensor nodes.</p><div class="ui active striped progress"><div id="progressbar" class="bar" style="width: 0%; display:block;"></div></div>'},
+						});	
 					}
 					else {
 						res.render("experiment", {
@@ -307,6 +303,7 @@ module.exports = function(io) {
 
 	function onMessage(event) {
 		if(event.type == "upstream") {
+			console.log(event)
 			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
 			event.ticket = event.ascii.substr(1,32);
 			event.ascii = event.ascii.substr(33);
@@ -341,7 +338,7 @@ module.exports = function(io) {
 			}
 			else if(params[0] == "alert") {
 				event.callback = "alert";
-				event.payload = event.ascii.substr(0, event.ascii.indexOf("/")+1);		
+				event.payload = event.ascii.split("/")[1];		
 			}
 			else if(params[0] == "ledstate") {
 				event.callback = "getLed";

@@ -199,9 +199,13 @@
       if(node.selected) {
         otherNodes = Nodes.slice(0);
         otherNodes.splice( index, 1 );
-        $.each(otherNodes, function(otherNodeIndex, otherNode) {
-          drawBrokenMessage(node, otherNode);
-        });
+
+        // toggle comment to visualize broken messages
+        //
+        // $.each(otherNodes, function(otherNodeIndex, otherNode) {
+        //   drawBrokenMessage(node, otherNode);
+        // });
+
       }
     });
 
@@ -214,18 +218,26 @@
 
   function ledOn() {
     arrangeNodes();
-    jsMote.switchLed(true, function(id, message) {
-      if(message == "turned on") {
-        Nodes[getNodeById(id.split(":")[3])].changeLed(true);
+    $.each(Nodes, function(index, node) {
+      if(node.selected) {
+        jsMote.switchLed(true, node.id, function(id, message) {
+          if(message == "turned on") {
+            Nodes[getNodeById(id.split(":")[3])].changeLed(true);
+          }
+        });
       }
     });
   }
 
   function ledOff() {
     arrangeNodes();
-    jsMote.switchLed(false, function(id, message) {
-      if(message == "turned off") {
-        Nodes[getNodeById(id.split(":")[3])].changeLed(false);
+    $.each(Nodes, function(index, node) {
+      if(node.selected) {
+        jsMote.switchLed(false, node.id, function(id, message) {
+          if(message == "turned off") {
+            Nodes[getNodeById(id.split(":")[3])].changeLed(false);
+          }
+        });
       }
     });
   }
