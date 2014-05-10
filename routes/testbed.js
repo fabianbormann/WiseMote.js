@@ -167,6 +167,42 @@ module.exports = function(io) {
 		io.broadcast('finishFlashing', {message : JSON.stringify(result)});
 	}
 
+
+	function getNodeTypes(nodeUrns, callback) {
+		testbed.getWiseML(null,
+			function(wiseml) {
+				var nodes = wiseml.setup.node;
+				var nodeMap = new Array();	
+				var iSense39 = new Array();
+				var iSense48 = new Array();		
+				var telosB = new Array();
+				for(var index = 0; index < nodes.length; index++) {
+					if (nodeUrns.indexOf(nodes[index].id) != -1) {
+						if (nodes[index].nodeType == "isense39")  {
+							iSense39.push(nodes[index].id);
+						}
+						else if (nodes[index].nodeType == "isense48") {
+							iSense48.push(nodes[index].id);
+						}
+						else if (nodes[index].nodeType == "telosb") {
+							telosB.push(nodes[index].id);
+						}
+					}
+		        }
+		        nodeMap.push(iSense39);
+		        nodeMap.push(iSense48)
+		        nodeMap.push(telosB)
+		        callback(nodeMap);
+			},
+			function(err) {
+				if(err) {
+					console.log('Could not fetch sensor node information form portal server.');
+					console.log(JSON.stringify(err));
+				}
+			}, "json", null
+		);
+	}
+
 	routes.showExperiment = function(req, res) {
 		Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
 			if(err) {
@@ -175,41 +211,63 @@ module.exports = function(io) {
 			else {
 				if (experiment) {
 					if(!experiment.flashed) {
-						var image; 
+						getNodeTypes(experiment.nodeUrns, function(nodes) {
+							 
+							var iSense39Image = new Buffer(fs.readFileSync('./public/apps/iSense39/remote_app.bin')).toString('base64');
+							var iSense48Image = new Buffer(fs.readFileSync('./public/apps/iSense48/remote_app.bin')).toString('base64');
 
+							var data = {
+								configurations : []
+							};
 
-						image = fs.readFileSync('./public/apps/remote_app.bin');
-						var data = {
-							configurations : []
-						};
+							data.configurations.push({
+								nodeUrns : nodes[0],
+								image : "data:application/macbinary;base64,"+iSense39Image
+							});
 
-						var appImage = new Buffer(image).toString('base64');
+							testbed.experiments.flashNodes(
+								experiment.experimentId, 
+								data, 
+								broadcastFinishedFlashing,
+								broadcastFlashingProgress,
+								function(jqXHR, textStatus, errorThrown) {
+									console.log("error! :"); 
+									console.log(jqXHR);
+									console.log(textStatus);
+									console.log(errorThrown);
+								}
+							);
 
-						data.configurations.push({
-							nodeUrns : experiment.nodeUrns,
-							image : "data:application/macbinary;base64,"+appImage
+							var data = {
+								configurations : []
+							};
+
+							data.configurations.push({
+								nodeUrns : nodes[1],
+								image : "data:application/macbinary;base64,"+iSense48Image
+							});
+
+							testbed.experiments.flashNodes(
+								experiment.experimentId, 
+								data, 
+								broadcastFinishedFlashing,
+								broadcastFlashingProgress,
+								function(jqXHR, textStatus, errorThrown) {
+									console.log("error! :"); 
+									console.log(jqXHR);
+									console.log(textStatus);
+									console.log(errorThrown);
+								}
+							);
+
+							experiment.update({ $set: { flashed: true }}).exec();
+
+							res.render("experiment", {
+								experiment : experiment,
+								loading :  {text : 
+									'<p>Flashing remote application onto sensor nodes.</p><div class="ui active striped progress"><div id="progressbar" class="bar" style="width: 0%; display:block;"></div></div>'},
+							});	
 						});
-
-						testbed.experiments.flashNodes(
-							experiment.experimentId, 
-							data, 
-							broadcastFinishedFlashing,
-							broadcastFlashingProgress,
-							function(jqXHR, textStatus, errorThrown) {
-								console.log("error! :"); 
-								console.log(jqXHR);
-								console.log(textStatus);
-								console.log(errorThrown);
-							}
-						);
-
-						experiment.update({ $set: { flashed: true }}).exec();
-
-						res.render("experiment", {
-							experiment : experiment,
-							loading :  {text : 
-								'<p>Flashing remote application onto sensor nodes.</p><div class="ui active striped progress"><div id="progressbar" class="bar" style="width: 0%; display:block;"></div></div>'},
-						});	
 					}
 					else {
 						res.render("experiment", {
@@ -303,7 +361,6 @@ module.exports = function(io) {
 
 	function onMessage(event) {
 		if(event.type == "upstream") {
-			console.log(event)
 			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
 			event.ticket = event.ascii.substr(1,32);
 			event.ascii = event.ascii.substr(33);

@@ -15,7 +15,10 @@ var JsMote = (function() {
 			ledState = config.led;
 			temperature = config.temperature;
 			light = config.light;
-			delay = config.delay; 		
+			delay = config.delay;
+			if(config.metric) {
+				metric = config.metric;
+			}	
 		}
 
 		this.getId = function() {

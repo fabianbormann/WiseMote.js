@@ -12,6 +12,7 @@
 <script type="text/javascript">
 	$( document ).ready(function() {
 		var delay;
+		var states;
 
 		$(".ui.checkbox").checkbox();
 
@@ -36,18 +37,64 @@
 		    $( "#console" ).append("<p><i>"+data.message.sourceNodeUrn+":</i> "+data.message.ascii+"</p>");
 		}); 
 
-		io.on('flashingProgress', function(progress) {
-			var state = 100;
-			for(var urn in progress) {
-				if(progress[urn].statusCode < state)
-					state = progress[urn].statusCode;
+		function getTotalState() {
+			var totalNodes = states.length;
+			var chunk = 100/totalNodes;
+			var progress = 0;
+			for (var i = 0; i < totalNodes; i++) {
+				if(states[i] != undefined) {
+					progress += (states[i][1]/100)*chunk;
+				}
+			};
+			console.log(progress);
+			return progress;
+		}
+
+		function changeState(id, state) {
+			index = -1;
+			for (var i = 0; i < states.length; i++) {
+				if(states[i] != undefined) {
+					if(states[i][0] == id) {
+						index = i;
+					}
+				}
+			};
+			if(index < 0) {
+				insertInStates([id, state]);
 			}
-			$('#progressbar').width(state+'%');
+			else {
+				states[index][1] = state;
+			}
+		}
+
+		function insertInStates(stateArray) {
+			for (var i = 0; i < states.length; i++) {
+				if(states[i] == undefined) {
+					states[i] = stateArray;
+					break;
+				}
+			};
+		}
+
+		io.on('flashingProgress', function(progress) {
+			if(!states) {
+				states = new Array({{ experiment.nodeUrns.length }});
+			}
+			for(var urn in progress) {
+				changeState(urn, progress[urn].statusCode);
+			}
+			$('#progressbar').width(getTotalState()+'%');
 		}); 
 
 		io.on('finishFlashing', function(data) {
-			console.log(data.message)
-		    $('.ui.active.dimmer').remove();
+			for(var urn in JSON.parse(data.message)) {
+				changeState(urn, 100);
+			}
+			$('#progressbar').width(getTotalState()+'%');
+			if(getTotalState() >= 100) {
+		    	$('.ui.active.dimmer').remove();
+		    	window.location.reload();
+		    }
 		}); 
 	
 		function updatePreview() {
