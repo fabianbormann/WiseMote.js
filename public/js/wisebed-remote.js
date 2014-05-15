@@ -100,11 +100,19 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(message);
 			var ticketId = getTicketId("alert"+message);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId);
 			
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+				};
+			}  
 		};
 
 		/**
@@ -147,11 +155,19 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(sensor);
 			var ticketId = getTicketId("getSensorValue"+sensor);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);	
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+				};
+			}  
 		};
 
 		/**
@@ -195,11 +211,19 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(message);
 			var ticketId = getTicketId("broadcast"+message);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+				};
+			}   
 		};
 
 		/**
@@ -252,11 +276,19 @@ var JsMote = (function() {
 			var function_args = CoAP.getHexString(state);
 			var ticketId = getTicketId("switchLed"+state);
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId);
 
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter+function_args);
+				};
+			}   
 		};
 
 		/**
@@ -296,11 +328,19 @@ var JsMote = (function() {
 			var function_type = CoAP.getHexString("getLedState");
 			var ticketId = getTicketId("getLedState");
 			var hexTicketId = CoAP.getHexString(ticketId);
-			var hexNodeId = CoAP.getHexString(nodeId);
-
+			
 			tickets.checkIn(ticketId, callback);
 
-			sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);	    	
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);	 
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);
+				};
+			}   	
 		}
 
 		/**
@@ -341,17 +381,17 @@ var JsMote = (function() {
 	        		result.push(params[0]);
 	        		result.push("all");
 	        	}
-	        	else if(typeof params[0] == 'string') {
+	        	else if(typeof params[0] == 'object') {
 	        		result.push(self.receive);
 	        		result.push(params[0]);
 	        	}
 		    }
 	    	else if(params.length == 2) {
-	    		if(typeof params[0] == 'string' && typeof params[1] == 'function') {
+	    		if(typeof params[0] == 'object' && typeof params[1] == 'function') {
 	        		result.push(params[1]);
 	        		result.push(params[0]);
 	        	}
-	        	else if(typeof params[0] == 'function' && typeof params[1] == 'string') {
+	        	else if(typeof params[0] == 'function' && typeof params[1] == 'object') {
 	        		result.push(params[0]);
 	        		result.push(params[1]);
 	        	}
