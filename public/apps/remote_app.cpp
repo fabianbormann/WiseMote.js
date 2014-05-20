@@ -21,11 +21,12 @@
 #include "algorithms/routing/tree/tree_routing.h"
 #include "util/pstl/static_string.h"
 #include "config_testing.h"
+#ifdef ISENSE
 #include <isense/modules/core_module/core_module.h>
-
 #include <isense/modules/environment_module/environment_module.h>
 #include <isense/modules/environment_module/temp_sensor.h>
 #include <isense/modules/environment_module/light_sensor.h>
+#endif
 
 typedef wiselib::OSMODEL Os;
 typedef Os::Uart Uart;
@@ -49,14 +50,12 @@ public:
 		debug_ = &wiselib::FacetProvider<Os, Os::Debug>::get_facet(value);
 		uart_ = &wiselib::FacetProvider<Os, Os::Uart>::get_facet(value);
 		clock_ = &wiselib::FacetProvider<Os, Os::Clock>::get_facet(value);
-
+#ifdef ISENSE
 		cm_ = new isense::CoreModule(value);
-
 		led_state = 0;
 		cm_->led_off();
-
 		init_environmental_module(value);
-
+#endif
 		radio_->enable_radio();
 		radio_->reg_recv_callback<RemoteApplication, &RemoteApplication::receive_radio_message> (this);
 
@@ -67,11 +66,7 @@ public:
 	}
 
 	void receive_packet(size_t len, block_data_t *buf) {
-
-		char instruction[len];
-		sprintf(instruction, "%s", buf);
-
-		decode_instruction(instruction);
+		decode_instruction((char*)buf);
 	}
 
 	void decode_instruction(char * str) {
@@ -87,7 +82,12 @@ public:
 		args = strtok(NULL, "/");
 
 		char my_id[64];
+#ifdef ISENSE
 	    uint8 n = snprintf(my_id, 63,"%x", radio_->id());
+#endif
+#ifdef TINYOS
+	    int n = snprintf(my_id, 63,"%x", radio_->id());
+#endif
 	    my_id[n] = '\0';
 
 		if((strcmp(node_id, "all") == 0) || (strcmp(node_id, my_id) == 0)) {
@@ -135,14 +135,19 @@ public:
 		char * ticket_id;
 		char * payload;
 
-		char msg[len];
-		sprintf(msg, "%s", buf);
+		char * msg = (char*)buf;
 
 		ticket_id = strtok(msg, "/");
 		payload = strtok(NULL, "/");
 
 		char response[512];
+#ifdef ISENSE
 		uint16 n = snprintf((char*)response, 511,"%sreceive/%x/%x/%d/%d/%s", ticket_id, from, radio_->id(), ext.link_metric(), clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), payload);
+#endif
+#ifdef TINYOS
+		int n = snprintf((char*)response, 511,"%sreceive/%x/%x/%d/%d/%s", ticket_id, from, radio_->id(), ext.link_metric(), clock_->seconds(clock_->time())*1000+clock_->milliseconds(clock_->time()), payload);
+#endif
+
 		response[n] = '\0';
 
 		reply(response);
@@ -185,7 +190,7 @@ public:
 	}
 
 	void switch_led_state(bool state, char* ticket_id) {
-
+#ifdef ISENSE
 		char* message;
 
 		if(!state){
@@ -214,8 +219,10 @@ public:
 		buffer_[n] = '\0';
 
 		reply(buffer_);
+#endif
 	}
 
+#ifdef ISENSE
 	void init_environmental_module(Os::AppMainParameter& value) {
 		em_ = new isense::EnvironmentModule(value);
 		if (em_ != NULL) {
@@ -228,6 +235,7 @@ public:
 			}
 		}
 	}
+#endif
 
 	void getSensorValue(char* sensor, char* ticket_id) {
 		if (strcmp(sensor, "temperature") == 0) {
@@ -238,22 +246,27 @@ public:
 	}
 
     void get_temp(char* ticket_id) {
+		#ifdef ISENSE
     	int8_t temp = em_->temp_sensor()->temperature();;
 
     	char response[64];
 		sprintf(response, "%stemp/%i", ticket_id, temp);
 
 		reply(response);
+		#endif
     }
 
     void get_light(char* ticket_id) {
+		#ifdef ISENSE
     	uint32_t light = em_->light_sensor()->luminance();
 
     	char response[64];
     	sprintf(response, "%slight/%i", ticket_id, light);
 
 		reply(response);
+		#endif
     }
+
 
     void reply(char * message) {
     	size_t len = strlen(message);
@@ -267,11 +280,13 @@ private:
 	Os::Debug::self_pointer_t debug_;
 	Os::Clock::self_pointer_t clock_;
 	Os::Uart::self_pointer_t uart_;
-
+#ifdef ISENSE
 	isense::CoreModule* cm_;
+	isense::EnvironmentModule* em_;
+#endif
 	uint8_t led_state;
 
-	isense::EnvironmentModule* em_;
+
 };
 
 wiselib::WiselibApplication<Os, RemoteApplication> remote_app;

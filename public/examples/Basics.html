@@ -66,7 +66,7 @@
     function callbackExample() {
       jsMote.getSensorValue("temperature", function(source_id, value) {
         if(value < 20) {
-          jsMote.broadcast("Turn up the heating! It's only "+value+" degrees Celsius!", source_id.split(":")[3],
+          jsMote.broadcast("Turn up the heating! It's only "+value+" degrees Celsius!", [source_id.split(":")[3]],
             function(id, message, from, to, metric, timer) {
               alert(from+" says: "+message+". I ("+to+") shout call heating.on()");
           });

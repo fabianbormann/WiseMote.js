@@ -165,7 +165,7 @@ var JsMote = (function() {
 			};
 			
 			$.each(virtualNodes, function(index, virtualNode) {
-				if((nodeId == "all") || (nodeId == virtualNode.getId().split(":")[3])) {
+				if((nodeId == "all") || (nodeId.indexOf(virtualNode.getId().split(":")[3]) != -1)) {
 					virtualNode.request(message);
 				}
 			});
@@ -214,7 +214,7 @@ var JsMote = (function() {
 			};
 
 			$.each(virtualNodes, function(index, virtualNode) {
-				if((nodeId == "all") || (nodeId == virtualNode.getId().split(":")[3])) {
+				if((nodeId == "all") || (nodeId.indexOf(virtualNode.getId().split(":")[3]) != -1)) {
 					virtualNode.request(message);
 				}
 			});
@@ -264,7 +264,7 @@ var JsMote = (function() {
 
 			$.each(virtualNodes, function(index, virtualNode) {	
 				$.each(virtualNodes, function(broadcastIndex, otherNode) {
-					if((virtualNode.getId() != otherNode.getId()) && ((nodeId == "all") || (nodeId == virtualNode.getId().split(":")[3]))) {
+					if((virtualNode.getId() != otherNode.getId()) && ((nodeId == "all") || (nodeId.indexOf(virtualNode.getId().split(":")[3]) != -1))) {
 						//Try to simulate broken message probability 
 						if((Math.random()*100) < 80) {
 							otherNode.receiveRadioMessage(virtualNode.getId(), message.params, message.callback, virtualNode.getDelay()+200);
@@ -327,7 +327,7 @@ var JsMote = (function() {
 			};
 
 			$.each(virtualNodes, function(index, virtualNode) {
-				if((nodeId == "all") || (nodeId == virtualNode.getId().split(":")[3])) {
+				if((nodeId == "all") || (nodeId.indexOf(virtualNode.getId().split(":")[3]) != -1)) {
 					virtualNode.request(message);
 				}
 			});
@@ -371,7 +371,7 @@ var JsMote = (function() {
 			};
 
 			$.each(virtualNodes, function(index, virtualNode) {
-				if((nodeId == "all") || (nodeId == virtualNode.getId().split(":")[3])) {
+				if((nodeId == "all") || (nodeId.indexOf(virtualNode.getId().split(":")[3]) != -1)) {
 					virtualNode.request(message);
 				}
 			});
@@ -398,17 +398,17 @@ var JsMote = (function() {
 	        		result.push(params[0]);
 	        		result.push("all");
 	        	}
-	        	else if(typeof params[0] == 'string') {
+	        	else if(typeof params[0] == 'object') {
 	        		result.push(self.receive);
 	        		result.push(params[0]);
 	        	}
 		    }
 	    	else if(params.length == 2) {
-	    		if(typeof params[0] == 'string' && typeof params[1] == 'function') {
+	    		if(typeof params[0] == 'object' && typeof params[1] == 'function') {
 	        		result.push(params[1]);
 	        		result.push(params[0]);
 	        	}
-	        	else if(typeof params[0] == 'function' && typeof params[1] == 'string') {
+	        	else if(typeof params[0] == 'function' && typeof params[1] == 'object') {
 	        		result.push(params[0]);
 	        		result.push(params[1]);
 	        	}

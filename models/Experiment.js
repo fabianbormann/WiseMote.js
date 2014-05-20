@@ -21,9 +21,6 @@ var experimentSchema = mongoose.Schema({
     name: {
         type: String
     },
-    console: {
-        type: String
-    },
     experimentId : {
         type: String
     },

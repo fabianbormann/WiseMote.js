@@ -195,24 +195,30 @@
   function broadcast() {
     arrangeNodes();
 
+    /*
+    * toggle comment to visualize broken messages
+    *    
+    *  $.each(Nodes, function(index, node) {
+    *    if(node.selected) {
+    *      otherNodes = Nodes.slice(0);
+    *      otherNodes.splice( index, 1 );
+    *      $.each(otherNodes, function(otherNodeIndex, otherNode) {
+    *        drawBrokenMessage(node, otherNode);
+    *      });
+    *    }
+    *  });
+    *
+    **/
+    var broadcastingNodes = new Array();
+
     $.each(Nodes, function(index, node) {
-      if(node.selected) {
-        otherNodes = Nodes.slice(0);
-        otherNodes.splice( index, 1 );
-
-        // toggle comment to visualize broken messages
-        //
-        // $.each(otherNodes, function(otherNodeIndex, otherNode) {
-        //   drawBrokenMessage(node, otherNode);
-        // });
-
+      if(node.selected){
+        broadcastingNodes.push(node.id);
       }
     });
 
-    jsMote.broadcast("Hello World", function(id, message, from, to, metric, clock) {
-        if(Nodes[getNodeById(from)].selected) {
-          drawMessage(Nodes[getNodeById(from)], Nodes[getNodeById(to)], clock+"  "+metric);
-        }
+    jsMote.broadcast("Hello World", broadcastingNodes, function(id, message, from, to, metric, clock) {
+      drawMessage(Nodes[getNodeById(from)], Nodes[getNodeById(to)], clock+"  "+metric);
     });
   }
 
@@ -220,7 +226,7 @@
     arrangeNodes();
     $.each(Nodes, function(index, node) {
       if(node.selected) {
-        jsMote.switchLed(true, node.id, function(id, message) {
+        jsMote.switchLed(true, [node.id], function(id, message) {
           if(message == "turned on") {
             Nodes[getNodeById(id.split(":")[3])].changeLed(true);
           }
@@ -233,7 +239,7 @@
     arrangeNodes();
     $.each(Nodes, function(index, node) {
       if(node.selected) {
-        jsMote.switchLed(false, node.id, function(id, message) {
+        jsMote.switchLed(false, [node.id], function(id, message) {
           if(message == "turned off") {
             Nodes[getNodeById(id.split(":")[3])].changeLed(false);
           }
