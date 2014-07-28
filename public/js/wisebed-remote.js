@@ -343,6 +343,54 @@ var JsMote = (function() {
 			}   	
 		}
 
+		this.play = function(url, callback, nodeId) {
+			switch(arguments.length) {
+		        case 0: throw new Error("You haven't entered a URL!"); break;
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 2: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 3:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
+	    	}			
+
+			var function_type = CoAP.getHexString("play");
+			var ticketId = getTicketId("play");
+			var hexTicketId = CoAP.getHexString(ticketId);	
+
+			tickets.checkIn(ticketId, callback);
+
+			if(nodeId == "all") {
+				var hexNodeId = CoAP.getHexString(nodeId);
+				sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);	 
+			}
+			else {
+				for (var i = 0; i < nodeId.length; i++) {
+					var hexNodeId = CoAP.getHexString(nodeId[i]);
+					sendMessage(function_type+delimiter+hexTicketId+delimiter+hexNodeId+delimiter);
+				};
+			}   		
+		}
+
 		/**
 		* Default callback function for response (alert arguments)
 		*/

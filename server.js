@@ -54,5 +54,7 @@ app.post('/project/:projectId/add/member', workspace.addProjectMember);
 app.post('/experiment/:experimentId/save', testbed.saveExperiment);
 app.post('/nodes/message/send/:experimentId', testbed.sendMessage);
 
+app.post('/tempDownload/', testbed.tempDownload);
+
 app.listen(3000);
 console.log('Listening on port 3000');

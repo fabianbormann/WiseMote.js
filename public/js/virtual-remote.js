@@ -378,6 +378,46 @@ var JsMote = (function() {
 
 		};
 
+		this.play = function(sound_url, callback, nodeId) {
+			switch(arguments.length) {
+		        case 0: throw new Error("You haven't entered a URL!"); break;
+		        case 1: 
+		        	callback = this.receive;
+		        	nodeId = "all";
+		        	break;
+		        case 2: 
+		        	var optionalParams = handleOptionalParams([callback]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        case 3:
+		       		var optionalParams = handleOptionalParams([callback, nodeId]);
+		        	if(optionalParams.length < 1) {
+		        		throw new Error('Illegal argument type!');
+		        	}
+		        	else {
+		        		callback = optionalParams[0];
+		        		nodeId = optionalParams[1];
+		        	}
+		        	break;
+		        default: throw new Error('Illegal argument count!');
+	    	}			
+
+			$.ajax({
+			  	type: "POST",
+			  	url: "/tempDownload/",
+			  	data: { link: sound_url }
+			})
+			.done(function( msg ) {
+			    alert( msg );
+			});
+		}
+
 		/**
 		* Default callback function for response (alert arguments)
 		*/

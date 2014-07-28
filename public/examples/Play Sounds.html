@@ -1,0 +1,40 @@
+<html>
+<head>
+<style>
+  body {font-family: 'Open Sans', sans-serif;}
+</style>
+<!-- Configuration: Please do not remove -->
+<script src="/js/jquery-1.9.1.js"></script>
+<script src="/js/virtual-remote.js"></script>
+<script type="text/javascript">  
+  jsMote = new JsMote();
+  
+  jsMote.addNode({
+    id : "0x0001",
+    led : false,
+    light : 44,
+    temperature : 18,
+    delay : 500
+  });
+</script>
+<!-- End of Configuration -->
+<script type="text/javascript">
+    function uploadWavFile() {
+      jsMote.play($('#wavURL').val());
+    }
+
+    function uploadMidiFile() {
+      jsMote.play($('#midiURL').val());
+    }
+  </script>
+</head>
+<body>
+  <h1>Play Sounds</h1>
+  <p>Enter an URL to play a midi file.</p>
+  <input type="text" id="midiURL" style="width:80%" value="http://www.midiarchive.co.uk/files/Games/Tetris/Tetris%20-%20In%20Level%20Theme.mid">
+  <button onclick="uploadMidiFile();">play midi file</button>
+  <br>
+  <input type="text" id="wavURL" style="width:80%" value="http://www.moviewavs.com/0093058674/WAVS/Movies/Star_Wars_Episode_IV_A_New_Hope/starwarstheme.wav">
+  <button onclick="uploadWavFile();">play wav file</button>
+</body>
+</html>

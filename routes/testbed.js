@@ -1,5 +1,6 @@
 var wisebed = require('wisebed.js');
 var mongoose = require('mongoose');
+var request = require('request');
 var db = mongoose.connection;
 var login = require('../routes/login.js');
 var User = require('../models/User.js');
@@ -440,6 +441,27 @@ module.exports = function(io) {
 			}
 		});
 	}
+
+	routes.tempDownload = function(req, res) {
+		request.get(req.body.link, function (error, response, body) {
+		    if (!error && response.statusCode == 200) {
+
+		    	var test = str2ab(body);
+				for(var i = 0; i < 50; i++) {
+					console.log(test[i]);
+				}
+
+			}
+		});
+	}
+
+function str2ab(str) {
+	var uint=new Uint8Array(str.length);
+	for(var i=0,j=str.length;i<j;++i){
+	  uint[i]=str.charCodeAt(i);
+	}
+	return uint;
+}
 
 	return routes;
 };
