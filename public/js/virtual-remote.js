@@ -406,16 +406,9 @@ var JsMote = (function() {
 		        	}
 		        	break;
 		        default: throw new Error('Illegal argument count!');
-	    	}			
+	    	}
 
-			$.ajax({
-			  	type: "POST",
-			  	url: "/tempDownload/",
-			  	data: { link: sound_url }
-			})
-			.done(function( msg ) {
-			    alert( msg );
-			});
+	    	//$.post('/sendMidiFromURL/test', { link : sound_url }); 		
 		}
 
 		/**

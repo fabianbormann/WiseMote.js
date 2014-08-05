@@ -26,9 +26,11 @@
 #include <isense/modules/environment_module/environment_module.h>
 #include <isense/modules/environment_module/temp_sensor.h>
 #include <isense/modules/environment_module/light_sensor.h>
+#include "algorithms/sound/basic_sound.h"
 #endif
 
 typedef wiselib::OSMODEL Os;
+typedef wiselib::BasicSound<Os, Os::DAC, Os::Debug> basic_sound_t;
 typedef Os::Uart Uart;
 typedef Os::ExtendedRadio Radio;
 
@@ -50,12 +52,21 @@ public:
 		debug_ = &wiselib::FacetProvider<Os, Os::Debug>::get_facet(value);
 		uart_ = &wiselib::FacetProvider<Os, Os::Uart>::get_facet(value);
 		clock_ = &wiselib::FacetProvider<Os, Os::Clock>::get_facet(value);
+		dac_ = &wiselib::FacetProvider<Os, Os::DAC>::get_facet(value);
+
+		dac_->init();
+		basic_sound_.init( *dac_, *debug_ );
+
 #ifdef ISENSE
 		cm_ = new isense::CoreModule(value);
 		led_state = 0;
 		cm_->led_off();
 		init_environmental_module(value);
 #endif
+		//Internal States
+		receive_file = false; 
+		sound_data_index = 0;
+
 		radio_->enable_radio();
 		radio_->reg_recv_callback<RemoteApplication, &RemoteApplication::receive_radio_message> (this);
 
@@ -66,7 +77,12 @@ public:
 	}
 
 	void receive_packet(size_t len, block_data_t *buf) {
-		decode_instruction((char*)buf);
+		if(!receive_file) {
+			decode_instruction((char*)buf);
+		}
+		else {
+			receive_sound_data((char*)buf);
+		}
 	}
 
 	void decode_instruction(char * str) {
@@ -128,7 +144,41 @@ public:
 			if (strcmp(function, "getLedState") == 0) {
 				getLedState(ticket_id);
 			}
+
+			if (strcmp(function, "playMidi") == 0) {
+				receive_sound_file(ticket_id);
+			}
 		}
+	}
+
+	void receive_sound_file(char* ticket_id) {
+		file_upload_ticket = ticket_id;
+		receive_file = true;
+	}
+
+	void receive_sound_data(char * str) {
+		char * message;
+		char * value;
+
+		message = strtok(str, "/");
+		value = strtok(NULL, "/");
+
+		if (strcmp(message, "NEXT") == 0) {
+			sound_data[sound_data_index] = atoi(value);
+			sound_data_index++;
+		}
+		else {
+			receive_file = false;
+			size_t id_len = strlen(file_upload_ticket)+1;
+			size_t response_len = id_len+36;
+			char response[32+response_len];
+			sprintf(response, "%supload/finished upload start playing", file_upload_ticket);
+
+			reply(response);
+
+			basic_sound_.play( sound_data, sound_data_index );
+			sound_data_index = 0;
+		}	
 	}
 
 	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len, Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
@@ -267,11 +317,17 @@ public:
 		#endif
     }
 
-
     void reply(char * message) {
     	size_t len = strlen(message);
     	uart_->write( len, (block_data_t*)message );
     }
+
+	int atoi(char s[]) {
+	    int i, n=0;
+	    for(i=0; s[i]>='0' && s[i]<='9'; i++)
+	        n = 10*n + (s[i] - '0');
+	    return n;
+	}
 
 private:
 	Os::AppMainParameter* ospointer;
@@ -280,13 +336,19 @@ private:
 	Os::Debug::self_pointer_t debug_;
 	Os::Clock::self_pointer_t clock_;
 	Os::Uart::self_pointer_t uart_;
+	basic_sound_t basic_sound_;
+	Os::DAC::self_pointer_t dac_;
 #ifdef ISENSE
 	isense::CoreModule* cm_;
 	isense::EnvironmentModule* em_;
 #endif
 	uint8_t led_state;
-
-
+	uint32_t sound_length;
+	uint8_t sound_data[100000];
+	bool receive_file;
+	char* sound_data_type;
+	char* file_upload_ticket;
+	int sound_data_index;
 };
 
 wiselib::WiselibApplication<Os, RemoteApplication> remote_app;

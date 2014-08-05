@@ -442,26 +442,143 @@ module.exports = function(io) {
 		});
 	}
 
-	routes.tempDownload = function(req, res) {
-		request.get(req.body.link, function (error, response, body) {
+	function dec2hex(i) {
+	   return (i+0x100).toString(16).substr(-2).toUpperCase();
+	}
+
+	function convertToHexNodeId(nodeId) {
+		var hexNodeId = '';
+		for(var i=0; i<nodeId.length; i++) {
+			hexNodeId += '0x'+nodeId.charCodeAt(i).toString(16)+',';
+		}
+		return hexNodeId;
+	}
+
+	routes.sendMidiFromURL = function(req, res) {
+		request({url : req.body.link, encoding : null}, function (error, response, body) {
 		    if (!error && response.statusCode == 200) {
+				Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
+					if(err) {
+						throw err;
+					}
+					else {
+						var midi = buildMidiFiles(body);
+						console.log(JSON.stringify(midi));
 
-		    	var test = str2ab(body);
-				for(var i = 0; i < 50; i++) {
-					console.log(test[i]);
-				}
+						var messages = [];
 
+						if(req.body.seperateTracks.length == 0) {
+							//0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69 ,0x2f,     ticket       ,0x2f,   ,0x61, 0x6c, 0x6c   ,0x2f,0x00
+							//function_type                                 delimiter hexTicketId  delimiter hexNodeId (all)   delimiter
+							var message = {};
+								message.header = new Buffer("0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69,0x2f"+req.body.ticket+",0x2f,0x61,0x6c,0x6c,0x2f,0x00").toString('base64');
+								message.data = []; 
+								message.data.concat(midi.header);
+							for (var i = 0; i < midi.tracks.length; i++) {
+								message.data.concat(midi.tracks[i]);
+							};
+							messages.push(message);
+						}
+						else {
+							for (var i = 0; i < seperateTracks.length; i++) {
+								var trackId = seperateTracks[i].track;
+
+								if(trackId > midi.tracks.length)
+									throw new Error('Midifile does not contain '+trackId+' tracks!'); 
+
+								var nodeId = seperateTracks[i].node;
+								var hex_node_id = convertToHexNodeId(nodeId);
+
+								var message = {};
+									message.header = new Buffer("0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69,0x2f"+req.body.ticket+",0x2f,"+hex_node_id+"0x2f,0x00").toString('base64');
+									message.data = []; 
+									message.data.concat(midi.header);
+									message.data.concat(midi.tracks[trackId]);
+								messages.push(message);
+							};
+						}
+
+						for(var i = 0; i < messages.length; i++) {
+							testbed.experiments.send(
+								experiment.experimentId, 
+								experiment.nodeUrns, 
+								messages[i].header, // SEND HEADER
+								function(result) {
+									res.send();
+								}, 
+								function(jqXHR, textStatus, errorThrown) {
+									console.log(jqXHR);
+									console.log(textStatus);
+									console.log(errorThrown);
+									res.send();
+								}
+							);
+							for(var j = 0; j < messages[i].data.length; j++) {
+								testbed.experiments.send(
+									experiment.experimentId, 
+									experiment.nodeUrns, 
+									new Buffer("0x0A,0x4e,0x45,0x58,0x54,0x2f,0x"+dec2hex(messages[i].data[j])+",0x00").toString('base64'), //SEND DATA
+									function(result) {
+										res.send();
+									}, 
+									function(jqXHR, textStatus, errorThrown) {
+										console.log(jqXHR);
+										console.log(textStatus);
+										console.log(errorThrown);
+										res.send();
+									}
+								);
+							}
+							testbed.experiments.send(
+								experiment.experimentId, 
+								experiment.nodeUrns, 
+								 , // SEND FOOTER
+								function(result) {
+									res.send();
+								}, 
+								function(jqXHR, textStatus, errorThrown) {
+									console.log(jqXHR);
+									console.log(textStatus);
+									console.log(errorThrown);
+									res.send();
+								}
+							);
+						}
+					}
+				});
 			}
 		});
 	}
 
-function str2ab(str) {
-	var uint=new Uint8Array(str.length);
-	for(var i=0,j=str.length;i<j;++i){
-	  uint[i]=str.charCodeAt(i);
+	function buildMidiFiles(byteBuffer) {
+		var MidiFile = {};
+			MidiFile.tracks = [];
+		var track_count = 0;
+
+		var data = []
+		for(var i = 0; i < byteBuffer.length; i++) {
+			if(byteBuffer[i] == 77 && byteBuffer[i+1] == 84 && byteBuffer[i+2] == 114 && byteBuffer[i+3] == 107 && ((i%2) == 0)) {
+				if(track_count == 0) {
+					MidiFile.header = data;
+				}
+				else {
+					var track = {};
+						track.id = track_count-1;
+						track.data = data;
+					MidiFile.tracks.push(track);
+				}
+				track_count++;
+				data = [77,84,114,107];
+				i += 3;
+			}
+			else {
+				data.push(byteBuffer[i])
+			}
+		}
+
+		MidiFile.trackCount = track_count;
+		return MidiFile;
 	}
-	return uint;
-}
 
 	return routes;
 };
