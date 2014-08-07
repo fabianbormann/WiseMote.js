@@ -325,6 +325,7 @@ module.exports = function(io) {
 	}
 
 	routes.sendMessage = function(req, res) {
+		console.log(req.body.message);
 		Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
 			if(err) {
 				throw err;
@@ -458,6 +459,7 @@ module.exports = function(io) {
 		request({url : req.body.link, encoding : null}, function (error, response, body) {
 		    if (!error && response.statusCode == 200) {
 				Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
+					console.log(experiment);
 					if(err) {
 						throw err;
 					}
@@ -467,11 +469,14 @@ module.exports = function(io) {
 
 						var messages = [];
 
-						if(req.body.seperateTracks.length == 0) {
-							//0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69 ,0x2f,     ticket       ,0x2f,   ,0x61, 0x6c, 0x6c   ,0x2f,0x00
+						console.log(req.body);
+
+
+						if(JSON.parse(req.body.seperateTracks).length == 0) {
+							//[0A, 70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69 ,0x2f,     ticket       ,0x2f,   ,0x61, 0x6c, 0x6c   ,0x2f,0x00
 							//function_type                                 delimiter hexTicketId  delimiter hexNodeId (all)   delimiter
 							var message = {};
-								message.header = new Buffer("0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69,0x2f"+req.body.ticket+",0x2f,0x61,0x6c,0x6c,0x2f,0x00").toString('base64');
+								message.header = new Buffer("play/"+req.body.ticket+"/all").toString('base64');
 								message.data = []; 
 								message.data.concat(midi.header);
 							for (var i = 0; i < midi.tracks.length; i++) {
@@ -499,41 +504,46 @@ module.exports = function(io) {
 						}
 
 						for(var i = 0; i < messages.length; i++) {
+							console.log("SEND HEADER")
+							console.log(messages[i].header)
 							testbed.experiments.send(
 								experiment.experimentId, 
 								experiment.nodeUrns, 
 								messages[i].header, // SEND HEADER
 								function(result) {
-									res.send();
+									console.log(result);
 								}, 
 								function(jqXHR, textStatus, errorThrown) {
 									console.log(jqXHR);
 									console.log(textStatus);
 									console.log(errorThrown);
-									res.send();
+									
 								}
 							);
+							console.log("SEND MESSAGES")
 							for(var j = 0; j < messages[i].data.length; j++) {
 								testbed.experiments.send(
 									experiment.experimentId, 
 									experiment.nodeUrns, 
 									new Buffer("0x0A,0x4e,0x45,0x58,0x54,0x2f,0x"+dec2hex(messages[i].data[j])+",0x00").toString('base64'), //SEND DATA
 									function(result) {
-										res.send();
+										console.log(result);
 									}, 
 									function(jqXHR, textStatus, errorThrown) {
 										console.log(jqXHR);
 										console.log(textStatus);
 										console.log(errorThrown);
-										res.send();
+									
 									}
 								);
 							}
+							console.log("SEND FOOTER")
 							testbed.experiments.send(
 								experiment.experimentId, 
 								experiment.nodeUrns, 
-								 , // SEND FOOTER
+								 // SEND FOOTER
 								function(result) {
+									console.log(result);
 									res.send();
 								}, 
 								function(jqXHR, textStatus, errorThrown) {

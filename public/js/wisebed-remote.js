@@ -347,9 +347,10 @@ var JsMote = (function() {
 			switch(arguments.length) {
 		        case 0: throw new Error("You haven't entered a URL!"); break;
 		        case 1: 
-		        	track_and_nodeIds = [];
+		        	track_and_nodeIds = '[]';
 		        	break;
 		        case 2:
+		        	JSON.stringify(track_and_nodeIds);
 		        	break;
 		        default: 
 		        	throw new Error('Illegal argument count!');
@@ -357,10 +358,9 @@ var JsMote = (function() {
 
 			var function_type = CoAP.getHexString("play");
 			var ticketId = getTicketId("play");
-			var hexTicketId = CoAP.getHexString(ticketId);	
 
 			tickets.checkIn(ticketId, this.receive);
-			$.post('/sendMidiFromURL/'+experimentId, { link : sound_url, seperateTracks : track_and_nodeIds, ticket : hexTicketId });		
+			$.post('/sendMidiFromURL/'+experimentId, { link : url, seperateTracks : track_and_nodeIds, ticket : ticketId });		
 		}
 
 		/**
@@ -389,6 +389,7 @@ var JsMote = (function() {
 			message = prefix+message+suffix; 
 
 			var messageBytes = remote.parseByteArrayFromString(message);
+				console.log(messageBytes);
 				base64_message = base64_encode(messageBytes);
 
 	        $.post('/nodes/message/send/'+experimentId, { message : base64_message });
