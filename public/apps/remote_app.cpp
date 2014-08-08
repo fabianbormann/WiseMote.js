@@ -57,6 +57,8 @@ public:
 		dac_->init();
 		basic_sound_.init( *dac_, *debug_ );
 
+		debug_->debug("remote app booting!");
+
 #ifdef ISENSE
 		cm_ = new isense::CoreModule(value);
 		led_state = 0;
@@ -78,10 +80,12 @@ public:
 
 	void receive_packet(size_t len, block_data_t *buf) {
 		if(!receive_file) {
+			debug_->debug("Get instructions.");
 			decode_instruction((char*)buf);
 		}
 		else {
-			receive_sound_data((char*)buf);
+			debug_->debug("Get sound data.");
+			receive_sound_data(buf);
 		}
 	}
 
@@ -145,40 +149,61 @@ public:
 				getLedState(ticket_id);
 			}
 
-			if (strcmp(function, "playMidi") == 0) {
+			if (strcmp(function, "play") == 0) {
 				receive_sound_file(ticket_id);
 			}
 		}
 	}
 
-	void receive_sound_file(char* ticket_id) {
+	void receive_sound_file(char* ticket_id) {		
 		file_upload_ticket = ticket_id;
-		receive_file = true;
+		receive_file = true;	
+		size_t id_len = strlen(file_upload_ticket)+1;
+		size_t response_len = id_len+36;
+		char response[32+response_len];
+		sprintf(response, "%ssound/next", file_upload_ticket);
+		reply(response);		
 	}
 
-	void receive_sound_data(char * str) {
-		char * message;
-		char * value;
+	void receive_sound_data(uint8_t buf[]) {
+		#ifdef ISENSE_JENNIC_JN5148
+            vAHI_WatchdogStop();
+        #endif	
 
-		message = strtok(str, "/");
-		value = strtok(NULL, "/");
-
-		if (strcmp(message, "NEXT") == 0) {
-			sound_data[sound_data_index] = atoi(value);
-			sound_data_index++;
-		}
-		else {
+		debug_->debug("Read %i to %i Bytes of sound data", sound_data_index, sound_data_index+64);
+		if(buf[0] == 0xF3)  {
+			debug_->debug("finish");
 			receive_file = false;
 			size_t id_len = strlen(file_upload_ticket)+1;
 			size_t response_len = id_len+36;
 			char response[32+response_len];
 			sprintf(response, "%supload/finished upload start playing", file_upload_ticket);
-
 			reply(response);
 
+			debug_->debug("%i Bytes received start playing", sound_data_index);
 			basic_sound_.play( sound_data, sound_data_index );
 			sound_data_index = 0;
-		}	
+		}
+		else {
+			debug_->debug("message goes on");
+			for (int i = 0; i < 64; i++) {
+				debug_->debug("sound data idx: %i", sound_data_index);
+				sound_data[sound_data_index] = buf[i];
+				sound_data_index++;
+				if(i == 63) {
+					debug_->debug("Last Byte of message is %i", buf[i]);
+				}
+			}
+			size_t id_len = strlen(file_upload_ticket)+1;
+			size_t response_len = id_len+36;
+			char response[32+response_len];
+			sprintf(response, "%ssound/next", file_upload_ticket);
+			reply(response);
+		}
+
+		#ifdef ISENSE_JENNIC_JN5148
+           vAHI_WatchdogRestart();
+        #endif
 	}
 
 	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len, Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
@@ -344,7 +369,7 @@ private:
 #endif
 	uint8_t led_state;
 	uint32_t sound_length;
-	uint8_t sound_data[100000];
+	uint8_t sound_data[10000];
 	bool receive_file;
 	char* sound_data_type;
 	char* file_upload_ticket;

@@ -362,6 +362,7 @@ module.exports = function(io) {
 	}
 
 	function onMessage(event) {
+		console.log("GET MESSAGE!!")
 		if(event.type == "upstream") {
 			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
 			event.ticket = event.ascii.substr(1,32);
@@ -416,6 +417,10 @@ module.exports = function(io) {
 				event.callback ="light";
 				event.light = parseInt(params[1]); 
 			}
+			else if(params[0] == "sound") {
+				console.log("remote app requested next byte!");
+				sendNextChunk();
+			}
 
 
 			io.broadcast('incommingMessage', {message : event});
@@ -443,44 +448,86 @@ module.exports = function(io) {
 		});
 	}
 
-	function dec2hex(i) {
-	   return (i+0x100).toString(16).substr(-2).toUpperCase();
+	function getBase64(str) {
+		buf = new Buffer(str.length+2);
+		buf[0] = 0x0a; 
+		for (var i = 0; i < str.length ; i++) {
+			buf[i+1] = str.charCodeAt(i);
+		}
+		buf[str.length+1] = 0x00;
+		return buf.toString('base64');	   
 	}
 
-	function convertToHexNodeId(nodeId) {
-		var hexNodeId = '';
-		for(var i=0; i<nodeId.length; i++) {
-			hexNodeId += '0x'+nodeId.charCodeAt(i).toString(16)+',';
+	function getFooterMessage(byte) {
+		buf = new Buffer(3);
+		buf[0] = 0x0a;
+		buf[1] = 0xF3;
+		buf[2] = 0x00;
+		return buf.toString('base64');
+	}
+
+	var chunk_count;
+	var chunks;
+	var chunk_index;
+	var sound_experiment_nodeURNs;
+	var sound_experiment_Id;
+
+	function sendNextChunk() {
+		if(chunk_count > chunk_index) {
+			console.log(chunks[chunk_index]);
+			testbed.experiments.send(
+				sound_experiment_Id, 
+				sound_experiment_nodeURNs, 
+				chunks[chunk_index],
+				function(result) {
+					console.log(result);
+				}, 
+				function(jqXHR, textStatus, errorThrown) {
+					console.log(jqXHR);
+					console.log(textStatus);
+					console.log(errorThrown);
+				
+				}
+			);
+			chunk_index++;
 		}
-		return hexNodeId;
+		else {
+			console.log("SEND FOOTER");
+			testbed.experiments.send(
+				sound_experiment_Id, 
+				sound_experiment_nodeURNs, 
+				getFooterMessage(), //SEND 0xF3
+				function(result) {
+					console.log(result);
+				}, 
+				function(jqXHR, textStatus, errorThrown) {
+					console.log(jqXHR);
+					console.log(textStatus);
+					console.log(errorThrown);
+				
+				}
+			);
+		}
 	}
 
 	routes.sendMidiFromURL = function(req, res) {
 		request({url : req.body.link, encoding : null}, function (error, response, body) {
 		    if (!error && response.statusCode == 200) {
 				Experiment.findOne({_id : req.params.experimentId}, function (err, experiment) {
-					console.log(experiment);
 					if(err) {
 						throw err;
 					}
 					else {
 						var midi = buildMidiFiles(body);
-						console.log(JSON.stringify(midi));
-
 						var messages = [];
-
-						console.log(req.body);
-
-
 						if(JSON.parse(req.body.seperateTracks).length == 0) {
-							//[0A, 70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69 ,0x2f,     ticket       ,0x2f,   ,0x61, 0x6c, 0x6c   ,0x2f,0x00
-							//function_type                                 delimiter hexTicketId  delimiter hexNodeId (all)   delimiter
 							var message = {};
-								message.header = new Buffer("play/"+req.body.ticket+"/all").toString('base64');
+								message.header = getBase64("play/"+req.body.ticket+"/all/");
 								message.data = []; 
-								message.data.concat(midi.header);
+								message.data = message.data.concat(midi.header);
 							for (var i = 0; i < midi.tracks.length; i++) {
-								message.data.concat(midi.tracks[i]);
+								message.data = message.data.concat(midi.tracks[i].data);
+
 							};
 							messages.push(message);
 						}
@@ -492,65 +539,59 @@ module.exports = function(io) {
 									throw new Error('Midifile does not contain '+trackId+' tracks!'); 
 
 								var nodeId = seperateTracks[i].node;
-								var hex_node_id = convertToHexNodeId(nodeId);
-
 								var message = {};
-									message.header = new Buffer("0x0A,0x70,0x6c,0x61,0x79,0x4d,0x69,0x64,0x69,0x2f"+req.body.ticket+",0x2f,"+hex_node_id+"0x2f,0x00").toString('base64');
+									message.header = getBase64("play/"+req.body.ticket+"/"+nodeId+"/").toString('base64');
 									message.data = []; 
-									message.data.concat(midi.header);
-									message.data.concat(midi.tracks[trackId]);
+									message.data = message.data.concat(midi.header);
+									message.data = message.data.concat(midi.tracks[trackId].data);
 								messages.push(message);
 							};
 						}
 
 						for(var i = 0; i < messages.length; i++) {
-							console.log("SEND HEADER")
-							console.log(messages[i].header)
-							testbed.experiments.send(
-								experiment.experimentId, 
-								experiment.nodeUrns, 
-								messages[i].header, // SEND HEADER
-								function(result) {
-									console.log(result);
-								}, 
-								function(jqXHR, textStatus, errorThrown) {
-									console.log(jqXHR);
-									console.log(textStatus);
-									console.log(errorThrown);
-									
+							// Combine 64 Byte to a chunk
+							chunk_count = Math.floor(messages[i].data.length/64);
+							chunks = new Array(chunk_count);
+
+							for (var x = 0; x < chunk_count; x++) {
+								buf = new Buffer(66);
+								buf[0] = 0x0a;
+								for (var y = 0; y < 65 ; y++) {
+									buf[y+1] = messages[i].data[(x+1)*y];
 								}
-							);
-							console.log("SEND MESSAGES")
-							for(var j = 0; j < messages[i].data.length; j++) {
-								testbed.experiments.send(
-									experiment.experimentId, 
-									experiment.nodeUrns, 
-									new Buffer("0x0A,0x4e,0x45,0x58,0x54,0x2f,0x"+dec2hex(messages[i].data[j])+",0x00").toString('base64'), //SEND DATA
-									function(result) {
-										console.log(result);
-									}, 
-									function(jqXHR, textStatus, errorThrown) {
-										console.log(jqXHR);
-										console.log(textStatus);
-										console.log(errorThrown);
-									
-									}
-								);
+								buf[65] = 0x00;
+								chunks[x] = buf.toString('base64');
+							};
+
+							if(messages[i].data.length%64 > 0) {
+								buf = new Buffer(66);
+								buf[0] = 0x0a;
+								var iteration = 1;
+								for (var y = messages[i].data.length%64; y > 0; y--) {
+									buf[iteration] = messages[i].data[messages[i].data.length-y];
+									iteration++
+								}
+								buf[messages[i].data.length%64] = 0x00;
+								chunks.push(buf.toString('base64'));
+								chunk_count++;
 							}
-							console.log("SEND FOOTER")
+							// Chunks ready
+							sound_experiment_nodeURNs = experiment.nodeUrns;
+							sound_experiment_Id = experiment.experimentId;
+							chunk_index = 0;
+							// Send Header
 							testbed.experiments.send(
 								experiment.experimentId, 
 								experiment.nodeUrns, 
-								 // SEND FOOTER
+								messages[i].header,
 								function(result) {
 									console.log(result);
-									res.send();
 								}, 
 								function(jqXHR, textStatus, errorThrown) {
 									console.log(jqXHR);
 									console.log(textStatus);
 									console.log(errorThrown);
-									res.send();
+									
 								}
 							);
 						}
@@ -585,6 +626,10 @@ module.exports = function(io) {
 				data.push(byteBuffer[i])
 			}
 		}
+		var track = {};
+			track.id = track_count-1;
+			track.data = data;
+		MidiFile.tracks.push(track);		
 
 		MidiFile.trackCount = track_count;
 		return MidiFile;
