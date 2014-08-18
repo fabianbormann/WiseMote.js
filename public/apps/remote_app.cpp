@@ -80,11 +80,9 @@ public:
 
 	void receive_packet(size_t len, block_data_t *buf) {
 		if(!receive_file) {
-			debug_->debug("Get instructions.");
 			decode_instruction((char*)buf);
 		}
 		else {
-			debug_->debug("Get sound data.");
 			receive_sound_data(buf);
 		}
 	}
@@ -155,28 +153,22 @@ public:
 		}
 	}
 
-	void receive_sound_file(char* ticket_id) {		
-		file_upload_ticket = ticket_id;
+	void receive_sound_file(char* ticket_id) {
+		strncpy(file_upload_ticket, ticket_id, 33);
 		receive_file = true;	
-		size_t id_len = strlen(file_upload_ticket)+1;
-		size_t response_len = id_len+36;
-		char response[32+response_len];
-		sprintf(response, "%ssound/next", file_upload_ticket);
+
+		char response[64];
+		sprintf(response, "%ssound", file_upload_ticket);
 		reply(response);		
 	}
 
 	void receive_sound_data(uint8_t buf[]) {
-		#ifdef ISENSE_JENNIC_JN5148
-            vAHI_WatchdogStop();
-        #endif	
-
 		debug_->debug("Read %i to %i Bytes of sound data", sound_data_index, sound_data_index+64);
 		if(buf[0] == 0xF3)  {
 			debug_->debug("finish");
 			receive_file = false;
-			size_t id_len = strlen(file_upload_ticket)+1;
-			size_t response_len = id_len+36;
-			char response[32+response_len];
+
+			char response[128];
 			sprintf(response, "%supload/finished upload start playing", file_upload_ticket);
 			reply(response);
 
@@ -185,25 +177,19 @@ public:
 			sound_data_index = 0;
 		}
 		else {
-			debug_->debug("message goes on");
 			for (int i = 0; i < 64; i++) {
-				debug_->debug("sound data idx: %i", sound_data_index);
 				sound_data[sound_data_index] = buf[i];
 				sound_data_index++;
-				if(i == 63) {
-					debug_->debug("Last Byte of message is %i", buf[i]);
-				}
 			}
-			size_t id_len = strlen(file_upload_ticket)+1;
-			size_t response_len = id_len+36;
-			char response[32+response_len];
-			sprintf(response, "%ssound/next", file_upload_ticket);
+
+			for (int i = 0; i < 3; i++) {
+				debug_->debug("Bytes %i to %i :  %x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x,%x", i*16, (i*16)+15, buf[(i*16)], buf[(i*16)+1], buf[(i*16)+2], buf[(i*16)+3], buf[(i*16)+4], buf[(i*16)+5], buf[(i*16)+6], buf[(i*16)+7], buf[(i*16)+8], buf[(i*16)+9], buf[(i*16)+10], buf[(i*16)+11], buf[(i*16)+12], buf[(i*16)+13], buf[(i*16)+14], buf[(i*16)+15]);
+			}
+			
+			char response[64];
+			sprintf(response, "%ssound", file_upload_ticket);
 			reply(response);
 		}
-
-		#ifdef ISENSE_JENNIC_JN5148
-           vAHI_WatchdogRestart();
-        #endif
 	}
 
 	void receive_radio_message(Os::ExtendedRadio::node_id_t from, Os::ExtendedRadio::size_t len, Os::ExtendedRadio::block_data_t *buf, ExtendedData const &ext) {
@@ -342,17 +328,20 @@ public:
 		#endif
     }
 
-    void reply(char * message) {
+    void reply(char * message) {	
     	size_t len = strlen(message);
+    	debug_->debug("Write Message %s with length %i", message, len);
     	uart_->write( len, (block_data_t*)message );
     }
 
-	int atoi(char s[]) {
-	    int i, n=0;
-	    for(i=0; s[i]>='0' && s[i]<='9'; i++)
-	        n = 10*n + (s[i] - '0');
-	    return n;
-	}
+	char *strncpy(char *dest, char *src, size_t n) {
+		char *end = src + n;
+		for( ; src < end && *src; src++, dest++) {
+			*dest = *src;
+		}
+		if(src < end) { *dest = '\0'; }
+		return dest;
+	}    
 
 private:
 	Os::AppMainParameter* ospointer;
@@ -369,10 +358,10 @@ private:
 #endif
 	uint8_t led_state;
 	uint32_t sound_length;
-	uint8_t sound_data[10000];
+	uint8_t sound_data[52000];
 	bool receive_file;
 	char* sound_data_type;
-	char* file_upload_ticket;
+	char file_upload_ticket[33];
 	int sound_data_index;
 };
 

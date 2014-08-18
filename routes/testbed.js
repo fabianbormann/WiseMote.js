@@ -362,7 +362,6 @@ module.exports = function(io) {
 	}
 
 	function onMessage(event) {
-		console.log("GET MESSAGE!!")
 		if(event.type == "upstream") {
 			event.ascii = new Buffer(event.payloadBase64, 'base64').toString('ascii');
 			event.ticket = event.ascii.substr(1,32);
@@ -490,6 +489,9 @@ module.exports = function(io) {
 				}
 			);
 			chunk_index++;
+			if (chunk_index >= 810) {
+				chunk_index = chunk_count;
+			}
 		}
 		else {
 			console.log("SEND FOOTER");
@@ -519,6 +521,24 @@ module.exports = function(io) {
 					}
 					else {
 						var midi = buildMidiFiles(body);
+
+						// Convert Midifile smf1 to smf0
+						//
+						// fs.writeFileSync("/public/external/smf1.mid", body);
+						//
+						// var sys = require('sys')
+						// var exec = require('child_process').exec;
+						// var child;
+						// child = exec(__dirname+"../public/external/midicvt smf1.mid smf0.mid", function (error, stdout, stderr) {
+						//	 sys.print('stdout: ' + stdout);
+						//	 sys.print('stderr: ' + stderr);
+						//	 if (error !== null) {
+						//	 console.log('exec error: ' + error);
+						//	 }
+						// });
+						// var body2 = fs.readFileSync("/public/external/smf0.mid");
+						// var midi = buildMidiFiles(body2);
+
 						var messages = [];
 						if(JSON.parse(req.body.seperateTracks).length == 0) {
 							var message = {};
@@ -527,7 +547,6 @@ module.exports = function(io) {
 								message.data = message.data.concat(midi.header);
 							for (var i = 0; i < midi.tracks.length; i++) {
 								message.data = message.data.concat(midi.tracks[i].data);
-
 							};
 							messages.push(message);
 						}
@@ -556,10 +575,11 @@ module.exports = function(io) {
 							for (var x = 0; x < chunk_count; x++) {
 								buf = new Buffer(66);
 								buf[0] = 0x0a;
-								for (var y = 0; y < 65 ; y++) {
-									buf[y+1] = messages[i].data[(x+1)*y];
+								for (var y = 0; y < 64 ; y++) {
+									buf[y+1] = messages[i].data[(x*64)+y];
 								}
 								buf[65] = 0x00;
+								//console.log(JSON.stringify(buf));
 								chunks[x] = buf.toString('base64');
 							};
 
@@ -579,6 +599,7 @@ module.exports = function(io) {
 							sound_experiment_nodeURNs = experiment.nodeUrns;
 							sound_experiment_Id = experiment.experimentId;
 							chunk_index = 0;
+
 							// Send Header
 							testbed.experiments.send(
 								experiment.experimentId, 
@@ -591,7 +612,6 @@ module.exports = function(io) {
 									console.log(jqXHR);
 									console.log(textStatus);
 									console.log(errorThrown);
-									
 								}
 							);
 						}
@@ -605,7 +625,6 @@ module.exports = function(io) {
 		var MidiFile = {};
 			MidiFile.tracks = [];
 		var track_count = 0;
-
 		var data = []
 		for(var i = 0; i < byteBuffer.length; i++) {
 			if(byteBuffer[i] == 77 && byteBuffer[i+1] == 84 && byteBuffer[i+2] == 114 && byteBuffer[i+3] == 107 && ((i%2) == 0)) {
@@ -616,6 +635,7 @@ module.exports = function(io) {
 					var track = {};
 						track.id = track_count-1;
 						track.data = data;
+					console.log(track.data);
 					MidiFile.tracks.push(track);
 				}
 				track_count++;
